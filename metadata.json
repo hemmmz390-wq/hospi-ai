@@ -1,0 +1,6 @@
+{
+  "name": "HOSPI AI",
+  "description": "AI-Powered Hospitality Service Platform connecting international tourist requests to hotel operations across Front Office, Housekeeping, and F&B with real-time translation, routing, and priority detection.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

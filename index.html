@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>HOSPI AI — Hotel service operations</title>
+    <meta name="description" content="HOSPI AI turns every guest request into a routed, tracked task for the right hotel team." />
+    <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e0e0d" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Cpath d='M10 9v14M22 9v14M10 16h12' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+      // Tema dipasang sebelum React mount, supaya tidak ada kedipan tema salah.
+      (function () {
+        try {
+          var saved = localStorage.getItem("hospi_theme_v1");
+          var dark =
+            saved === "dark" ||
+            ((!saved || saved === "system") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+          var size = localStorage.getItem("hospi_textsize_v1");
+          if (size === "large") document.documentElement.style.fontSize = "112.5%";
+          if (size === "xlarge") document.documentElement.style.fontSize = "125%";
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="font-sans antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
