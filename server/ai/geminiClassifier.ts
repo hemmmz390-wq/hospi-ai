@@ -43,6 +43,7 @@ RULES
 - Several items for the same department (e.g. towels and a bottle of water) become ONE request for that department. Bottled water and amenities go to Housekeeping, not Food & Beverage.
 - Late checkout: category "billing_checkout", lateCheckoutHour one of 13:00/14:00/15:00. Fees: ${late}. It is NOT approved yet; say it is pending approval.
 - Luggage help: category "bellboy".
+- Sightseeing, places to visit, things to do nearby: isDirectAnswer true, category "faq", suggestExplore true. guestReply says the Explore page lists nearby places and the hotel can arrange a car with a driver. Do not create a ticket.
 - If unsure (confidence < 0.8): category "unclassified", department "Front Office", needsFoReview true.
 - taskTitle: short English title, max 5 words.
 - translatedRequest: clear operational instruction in Indonesian for hotel staff.
@@ -87,6 +88,7 @@ const schema = {
       items: { type: Type.OBJECT, properties: { menuId: { type: Type.STRING }, qty: { type: Type.NUMBER } }, required: ["menuId", "qty"] },
     },
     suggestFoodMenu: { type: Type.BOOLEAN },
+    suggestExplore: { type: Type.BOOLEAN },
     lateCheckoutHour: { type: Type.STRING },
   },
   required: ["isDirectAnswer", "category", "taskTitle", "quantity", "confidence", "assignedDepartment", "priority", "translatedRequest", "guestReply", "detectedLanguage"],

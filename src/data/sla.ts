@@ -22,6 +22,7 @@ export const SLA_ROUTING_CONFIG: Record<string, SLAConfig> = {
   cleaning: { category: "Room cleaning", dept: "Housekeeping", ackMin: 5, doneMin: 30, overflowTarget: "Front Office", priority: "MEDIUM" },
   dining: { category: "Food order", dept: "Food & Beverage", ackMin: 3, doneMin: 30, overflowTarget: "Front Office", priority: "MEDIUM" },
   bellboy: { category: "Bell service", dept: "Front Office", ackMin: 2, doneMin: 10, overflowTarget: "Front Office", priority: "MEDIUM" },
+  excursion: { category: "Excursion transport", dept: "Front Office", ackMin: 3, doneMin: 30, overflowTarget: "Duty Manager", priority: "MEDIUM" },
   billing_checkout: { category: "Late checkout", dept: "Front Office", ackMin: 2, doneMin: 15, overflowTarget: "Front Office", priority: "MEDIUM" },
   upsell: { category: "Service booking", dept: "Front Office", ackMin: 5, doneMin: 60, overflowTarget: "Front Office", priority: "LOW" },
   unclassified: { category: "General request", dept: "Front Office", ackMin: 2, doneMin: 20, overflowTarget: "Front Office", priority: "MEDIUM" },

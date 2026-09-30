@@ -17,6 +17,7 @@ import {
   UtensilsCrossed,
   CheckCircle2,
   Phone,
+  MapPin,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
@@ -29,6 +30,8 @@ import { QuickKind, QuickRequestSheet } from "./sheets/QuickRequestSheet";
 import { LateCheckoutSheet } from "./sheets/LateCheckoutSheet";
 import { BellboySheet } from "./sheets/BellboySheet";
 import { useGuestSheets } from "./GuestApp";
+import { ATTRACTIONS, dayPartOf, rankAttractions } from "../../data/attractions";
+import { CATEGORY_META } from "./GuestExplore";
 
 type Action = { id: string; label: TranslationKey; icon: React.ComponentType<{ className?: string }> };
 
@@ -234,6 +237,47 @@ export function GuestHome() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Wisata: dua rekomendasi yang paling cocok untuk saat ini */}
+      <section aria-labelledby="explore-title">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <div>
+            <h2 id="explore-title" className="text-[0.9375rem] font-semibold">
+              {t("ex.home.title")}
+            </h2>
+            <p className="text-[0.8125rem] text-muted">{t(`ex.now.${dayPartOf()}` as TranslationKey)}</p>
+          </div>
+        </div>
+        <Card as="ul" className="divide-y divide-line">
+          {rankAttractions(ATTRACTIONS, dayPartOf())
+            .slice(0, 2)
+            .map((a) => {
+              const Icon = CATEGORY_META[a.category].icon;
+              return (
+                <li key={a.id}>
+                  <button type="button" onClick={() => navigate("/guest/explore")} className="flex w-full items-center gap-3 px-4 py-3.5 text-left hover:bg-sunken/60">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sunken">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium">{a.name}</span>
+                      <span className="block text-[0.8125rem] text-muted">
+                        {t(CATEGORY_META[a.category].label)} · {t("ex.drive", { n: a.driveMin })}
+                      </span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-subtle" />
+                  </button>
+                </li>
+              );
+            })}
+          <li>
+            <button type="button" onClick={() => navigate("/guest/explore")} className="flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-medium hover:bg-sunken/60">
+              <MapPin className="h-4 w-4" />
+              {t("ex.home.all")}
+            </button>
+          </li>
+        </Card>
       </section>
 
       {/* Layanan lain */}

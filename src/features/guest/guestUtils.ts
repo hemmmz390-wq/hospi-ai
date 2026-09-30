@@ -26,7 +26,16 @@ export function useGuestTickets() {
 export function guestTitle(t: (k: TranslationKey, v?: Record<string, string | number>) => string, ticket: ServiceTicket) {
   if (ticket.order) return t("g.orderTitle", { id: ticket.order.id });
   if (ticket.lateCheckout) return t("g.lateTitle", { hour: ticket.lateCheckout.hour });
+  if (ticket.excursion) return t("g.exTitle", { place: ticket.excursion.place });
   return t(categoryKey(ticket.category));
+}
+
+/** Jam jemput mobil wisata dalam bahasa tamu: "Secepatnya", "Hari ini 14:00", "Besok 08:00". */
+export function pickupLabel(t: (k: TranslationKey, v?: Record<string, string | number>) => string, ex: NonNullable<ServiceTicket["excursion"]>, now = new Date()) {
+  if (ex.asap) return t("ex.sheet.asap");
+  const at = new Date(ex.pickupAt);
+  const time = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  return t(at.toDateString() === now.toDateString() ? "ex.sheet.today" : "ex.sheet.tomorrow", { time });
 }
 
 export function greetingKey(date = new Date()): TranslationKey {

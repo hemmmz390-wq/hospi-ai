@@ -69,6 +69,7 @@ app.post("/api/tickets", async (req, res) => {
           (t: any) =>
             t.room === ticket.room &&
             t.category === ticket.category &&
+            (ticket.category !== "excursion" || t.excursion?.placeId === ticket.excursion?.placeId) &&
             OPEN(t) &&
             now.getTime() - new Date(t.sla?.created_at || now).getTime() < 600000
         );

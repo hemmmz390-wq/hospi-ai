@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, Star, Phone, AlertTriangle, Languages, PauseCircle, Gift } from "lucide-react";
+import { ArrowUpRight, Star, Phone, AlertTriangle, Languages, PauseCircle, Gift, Car, MapPin } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { ALL_DEPARTMENTS, Department, Priority, ServiceTicket, isTicketClosed } from "../../types";
@@ -12,6 +12,8 @@ import { Badge, Button, Field, Input, Overlay, Select, Textarea } from "../../co
 import { EscalatedBadge, PriorityBadge, SlaTimer, StatusBadge } from "../../components/domain";
 import { deptKey } from "../guest/components";
 import { ROLE_DEPT, seesEverything } from "./staffUtils";
+import { pickupLabel } from "../guest/guestUtils";
+import { ATTRACTIONS, mapsUrl } from "../../data/attractions";
 
 type Mode = null | "defer" | "transfer" | "reassign" | "cancel" | "priority" | "merge" | "note" | "compensate" | "decline";
 
@@ -367,6 +369,41 @@ export function TicketDrawer({ ticketId, onClose, onOpenTicket }: { ticketId: st
           <section className="rounded-lg border border-line p-4 text-[0.8125rem]">
             <p className="font-medium">{t("tk.lateRequest", { hour: ticket.lateCheckout.hour })}</p>
             <p className="mt-0.5 text-muted">{t("tk.lateFee", { fee: formatCurrency(ticket.lateCheckout.fee) })}</p>
+          </section>
+        )}
+
+        {ticket.excursion && (
+          <section>
+            <h3 className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted">
+              <Car className="h-3.5 w-3.5" />
+              {t("tk.ex.title")}
+            </h3>
+            <div className="rounded-lg border border-line px-4 py-1">
+              <dl className="divide-y divide-line">
+                <Row label={t("tk.ex.dest")}>
+                  {(() => {
+                    const place = ATTRACTIONS.find((a) => a.id === ticket.excursion!.placeId);
+                    return place ? (
+                      <a href={mapsUrl(place)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium underline-offset-2 hover:underline">
+                        {ticket.excursion!.place}
+                        <MapPin className="h-3.5 w-3.5" />
+                      </a>
+                    ) : (
+                      ticket.excursion!.place
+                    );
+                  })()}
+                </Row>
+                <Row label={t("tk.ex.pickup")}>
+                  {ticket.excursion.asap
+                    ? t("tk.ex.asap", { time: new Date(ticket.excursion.pickupAt).toTimeString().slice(0, 5) })
+                    : pickupLabel(t, ticket.excursion)}
+                </Row>
+                <Row label={t("tk.ex.people")}>{ticket.excursion.people}</Row>
+              </dl>
+            </div>
+            {ticket.excursion.assist && <p className="mt-2 rounded-md bg-warn-soft px-3 py-2 text-[0.8125rem] text-warn">{t("tk.ex.assist")}</p>}
+            {ticket.excursion.note && <p className="mt-2 text-[0.8125rem]">“{ticket.excursion.note}”</p>}
+            <p className="mt-2 text-xs text-muted">{t("tk.ex.confirmPrice")}</p>
           </section>
         )}
 

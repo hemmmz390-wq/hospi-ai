@@ -41,6 +41,8 @@ export interface Classification {
   orderItems?: { menuId: string; qty: number }[];
   /** Tamu menyebut makanan tanpa item tertentu: arahkan ke menu. */
   suggestFoodMenu?: boolean;
+  /** Tamu menanyakan tempat wisata: arahkan ke halaman Wisata sekitar. */
+  suggestExplore?: boolean;
   lateCheckoutHour?: string;
   lateCheckoutFee?: number;
   bellboyService?: "luggage_help" | "luggage_pickup" | "escort" | "other";

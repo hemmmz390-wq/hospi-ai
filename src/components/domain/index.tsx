@@ -15,6 +15,7 @@ import {
   Zap,
   ShowerHead,
   ConciergeBell,
+  Car,
 } from "lucide-react";
 import { ServiceTicket, Priority } from "../../types";
 import { useI18n } from "../../i18n";
@@ -110,6 +111,7 @@ const CATEGORY_ICON: Record<string, React.ComponentType<{ className?: string }>>
   emergency: Siren,
   dining: Utensils,
   bellboy: Briefcase,
+  excursion: Car,
   unclassified: CircleHelp,
 };
 

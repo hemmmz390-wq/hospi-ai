@@ -25,6 +25,7 @@ export interface ClassificationResult {
   escalationReason?: "sentimen_komplain" | "darurat" | "kompleksitas_tinggi" | "permintaan_tamu";
   orderItems?: { menuId: string; qty: number }[];
   suggestFoodMenu?: boolean;
+  suggestExplore?: boolean;
   lateCheckoutHour?: string;
   lateCheckoutFee?: number;
   bellboyService?: "luggage_help" | "luggage_pickup" | "escort" | "other";

@@ -178,6 +178,8 @@ export interface ServiceTicket {
   lateCheckout?: { hour: string; fee: number };
   /** Terisi bila tiket ini adalah permintaan bellboy. */
   bellboy?: { service: "luggage_help" | "luggage_pickup" | "escort" | "other"; note?: string };
+  /** Terisi bila tiket ini adalah permintaan mobil ke tempat wisata. */
+  excursion?: { placeId: string; place: string; pickupAt: string; asap: boolean; people: number; assist: boolean; note?: string };
   /** Jenis darurat yang dipilih tamu, bila tiket dibuat lewat tombol darurat. */
   emergencyType?: "fire" | "medical" | "security" | "other";
   translatedRequest: string; // Indonesian operational instruction for staff
@@ -230,7 +232,7 @@ export interface ChatMessage {
    */
   orderDraft?: { items: { menuId: string; qty: number }[]; confirmedTicketId?: string };
   /** Tamu menyebut makanan tanpa item tertentu: tampilkan tombol ke menu. */
-  action?: "open_food_menu";
+  action?: "open_food_menu" | "open_explore";
   /** Pesan gagal diproses AI; tiket tetap dibuat ke Front Office. */
   aiUnavailable?: boolean;
 }
@@ -293,16 +295,26 @@ export interface FoodMenuItem {
   isPopular?: boolean;
 }
 
+export type AttractionCategory = "culture" | "nature" | "beach" | "food" | "shopping";
+export type DayPart = "morning" | "afternoon" | "evening";
+
+/** Tempat wisata yang direkomendasikan concierge. Deskripsinya ada di kamus (ex.place.<id>). */
 export interface Attraction {
   id: string;
   name: string;
-  category: "culture" | "beach" | "dining" | "shopping" | "wellness";
-  distance: string;
-  travelTime: string;
-  rating: number;
-  description: string;
-  image: string;
-  recommendation: string;
+  category: AttractionCategory;
+  distanceKm: number;
+  driveMin: number;
+  hours: string;
+  /** Perkiraan tiket masuk per orang dewasa, rupiah. 0 = gratis. */
+  fee: number;
+  bestAt: DayPart[];
+  /** Seberapa berat jalan kakinya: penting untuk tamu lansia dan keluarga. */
+  effort: "easy" | "moderate" | "hard";
+  familyFriendly: boolean;
+  mapsQuery: string;
+  /** Paket tur hotel yang mengunjungi tempat ini (id dari UPSELL_OFFERS). */
+  tourOfferId?: string;
 }
 
 export type ColorTune = "luxury_gold" | "deep_navy" | "emerald_sanctuary" | "warm_terracotta";

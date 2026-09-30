@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronRight, Star, Clock, PauseCircle } from "lucide-react";
+import { ChevronRight, Star, Clock, PauseCircle, Car } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { ServiceTicket, isTicketClosed } from "../../types";
@@ -9,7 +9,7 @@ import { staffDisplayName } from "../../data/staff";
 import { cn } from "../../lib/cn";
 import { Badge, Button, Card, Overlay, Stepper, Textarea } from "../../components/ui";
 import { CategoryIcon } from "../../components/domain";
-import { guestTitle } from "./guestUtils";
+import { guestTitle, pickupLabel } from "./guestUtils";
 
 export const deptKey = (dept: string) => `dp.${dept.replace(/[^A-Za-z]/g, "")}` as TranslationKey;
 
@@ -30,6 +30,14 @@ export function EtaLine({ ticket }: { ticket: ServiceTicket }) {
   }
   if (ticket.lateCheckout) {
     return <p className="text-[0.8125rem] text-muted">{t("g.pendingApproval")}</p>;
+  }
+  if (ticket.excursion) {
+    return (
+      <p className="flex items-center gap-1.5 text-[0.8125rem] text-muted">
+        <Car className="h-3.5 w-3.5 shrink-0" />
+        {t("tk.ex.pickup")} · {pickupLabel(t, ticket.excursion)}
+      </p>
+    );
   }
   const v = slaView(ticket, now);
   return (

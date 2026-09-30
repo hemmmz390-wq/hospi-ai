@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowUp, Mic, X, Headset, UtensilsCrossed, AlertCircle, Phone } from "lucide-react";
+import { ArrowUp, Mic, X, Headset, UtensilsCrossed, AlertCircle, Phone, MapPin } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { ChatMessage, UpsellOffer } from "../../types";
@@ -178,6 +178,11 @@ function Message({ m }: { m: ChatMessage }) {
       {m.action === "open_food_menu" && (
         <Button size="sm" variant="secondary" className="mt-2" icon={<UtensilsCrossed className="h-3.5 w-3.5" />} onClick={() => navigate("/guest/food")}>
           {t("g.chat.openMenu")}
+        </Button>
+      )}
+      {m.action === "open_explore" && (
+        <Button size="sm" variant="secondary" className="mt-2" icon={<MapPin className="h-3.5 w-3.5" />} onClick={() => navigate("/guest/explore")}>
+          {t("g.chat.openExplore")}
         </Button>
       )}
       <OfferCards message={m} />

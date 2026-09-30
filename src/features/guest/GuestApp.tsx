@@ -12,6 +12,7 @@ import { GuestRequests } from "./GuestRequests";
 import { GuestFood } from "./GuestFood";
 import { GuestChat } from "./GuestChat";
 import { GuestMore } from "./GuestMore";
+import { GuestExplore } from "./GuestExplore";
 import { EmergencySheet } from "./sheets/EmergencySheet";
 import { CartProvider, useCart } from "./cart";
 
@@ -124,6 +125,7 @@ function Shell() {
             <Route path="food" element={<GuestFood />} />
             <Route path="chat" element={<GuestChat />} />
             <Route path="more" element={<GuestMore />} />
+            <Route path="explore" element={<GuestExplore />} />
             <Route path="*" element={<GuestHome />} />
           </Routes>
         </main>

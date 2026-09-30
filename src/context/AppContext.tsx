@@ -21,6 +21,7 @@ import {
   TimelineEntry,
   UpsellOffer,
   isTicketClosed,
+  Attraction,
 } from "../types";
 import { SUPPORTED_LANGUAGES } from "../data/mockData";
 import { FOOD_MENU } from "../data/menu";
@@ -51,6 +52,15 @@ export type LateCheckoutRequest = {
   status: "pending" | "approved" | "declined";
 };
 
+export type ExcursionRequest = {
+  place: Attraction;
+  pickupAt: Date;
+  asap: boolean;
+  people: number;
+  assist: boolean;
+  note?: string;
+};
+
 type CreateTicketInput = {
   room: string;
   guestName: string;
@@ -72,6 +82,7 @@ type CreateTicketInput = {
   order?: ServiceTicket["order"];
   lateCheckout?: ServiceTicket["lateCheckout"];
   bellboy?: ServiceTicket["bellboy"];
+  excursion?: ServiceTicket["excursion"];
   emergencyType?: ServiceTicket["emergencyType"];
   /** Dipakai simulasi untuk menandai tiketnya sendiri. */
   idempotencyKey?: string;
@@ -146,6 +157,7 @@ interface AppContextType {
   lateCheckoutRequest: LateCheckoutRequest | null;
   approveLateCheckout: (ticketId: string, staffName: string) => void;
   declineLateCheckout: (ticketId: string, staffName: string, reason: string) => void;
+  requestExcursion: (req: ExcursionRequest) => Promise<ServiceTicket>;
   requestBellboy: (service: NonNullable<ServiceTicket["bellboy"]>["service"], note?: string) => Promise<ServiceTicket>;
   reportEmergency: (type: NonNullable<ServiceTicket["emergencyType"]>, note?: string) => Promise<ServiceTicket>;
 
@@ -642,6 +654,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         order: data.order,
         lateCheckout: data.lateCheckout,
         bellboy: data.bellboy,
+        excursion: data.excursion,
         emergencyType: data.emergencyType,
         sla: {
           ack_min: config.ackMin,
@@ -1149,6 +1162,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [guestRoom, guest.name, createTicket, showToast, t]
   );
 
+  const requestExcursion = useCallback(
+    async ({ place, pickupAt, asap, people, assist, note }: ExcursionRequest) => {
+      const day = pickupAt.toDateString() === clock().toDateString() ? "hari ini" : "besok";
+      const at = `${String(pickupAt.getHours()).padStart(2, "0")}:${String(pickupAt.getMinutes()).padStart(2, "0")}`;
+      const when = asap ? `secepatnya (±${at})` : `${day} ${at}`;
+      const ticket = await createTicket({
+        room: guestRoom,
+        guestName: guest.name,
+        channel: "qr_web",
+        raw_text: `Car to ${place.name}, ${people} ${people === 1 ? "person" : "people"}${note ? ` — ${note}` : ""}`,
+        category: "excursion",
+        taskTitle: `Car to ${place.name}`,
+        qty: people,
+        dept: "Front Office",
+        excursion: { placeId: place.id, place: place.name, pickupAt: pickupAt.toISOString(), asap, people, assist, note },
+        translatedRequest:
+          `Siapkan mobil + sopir untuk Kamar ${guestRoom} ke ${place.name} (${place.driveMin} menit). Jemput di lobi ${when}, ${people} orang.` +
+          (assist ? " Tamu butuh bantuan khusus (lansia/kursi roda/anak kecil)." : "") +
+          (note ? ` Catatan tamu: ${note}.` : "") +
+          " Konfirmasi harga ke tamu sebelum berangkat.",
+      });
+      showToast(t("toast.requestSent", { id: ticket.id }), "success");
+      return ticket;
+    },
+    [guestRoom, guest.name, createTicket, showToast, t]
+  );
+
   const reportEmergency = useCallback(
     async (type: NonNullable<ServiceTicket["emergencyType"]>, note?: string) => {
       const label = { fire: "Fire or smoke", medical: "Medical emergency", security: "Security", other: "Emergency" }[type];
@@ -1212,7 +1252,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             isDirectAnswer: true,
             confidence: data.confidence,
             offers: data.offers || [],
-            action: data.suggestFoodMenu ? "open_food_menu" : undefined,
+            action: data.suggestFoodMenu ? "open_food_menu" : data.suggestExplore ? "open_explore" : undefined,
           };
         } else {
           const created = await createTicket({
@@ -1460,6 +1500,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     lateCheckoutRequest,
     approveLateCheckout,
     declineLateCheckout,
+    requestExcursion,
     requestBellboy,
     reportEmergency,
     upsellCatalogue: UPSELL_OFFERS,

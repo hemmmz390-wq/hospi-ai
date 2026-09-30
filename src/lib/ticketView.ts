@@ -78,7 +78,7 @@ export function priorityTone(p: Priority): Tone {
 
 const KNOWN_CATEGORIES = [
   "towel", "cleaning", "linen", "ac", "electricity", "plumbing", "tv_wifi", "key_lock",
-  "billing_checkout", "complaint", "emergency", "dining", "bellboy", "unclassified",
+  "billing_checkout", "complaint", "emergency", "dining", "bellboy", "excursion", "unclassified",
 ];
 
 export function categoryKey(category: string): TranslationKey {

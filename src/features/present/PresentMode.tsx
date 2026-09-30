@@ -24,6 +24,7 @@ const SCENARIOS: { label: TranslationKey; text: TranslationKey; role: StaffRole 
   { label: "pm.sc.towels", text: "pm.sc.towelsText", role: "housekeeping" },
   { label: "pm.sc.food", text: "pm.sc.foodText", role: "food_beverage" },
   { label: "pm.sc.late", text: "pm.sc.lateText", role: "front_office" },
+  { label: "pm.sc.explore", text: "pm.sc.exploreText", role: "front_office" },
   { label: "pm.sc.smoke", text: "pm.sc.smokeText", role: "duty_manager" },
 ];
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Briefcase, CalendarClock, ChevronRight, Copy, Headset, LogOut, Receipt, ShieldCheck, Wifi, Coffee, Waves, Dumbbell, ScrollText, Phone } from "lucide-react";
+import { Briefcase, CalendarClock, ChevronRight, Copy, Headset, LogOut, Receipt, ShieldCheck, Wifi, Coffee, Waves, Dumbbell, ScrollText, Phone, MapPin } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { Badge, Button, Card } from "../../components/ui";
@@ -95,6 +95,7 @@ export function GuestMore() {
 
       <Card as="ul" className="divide-y divide-line">
         <Row icon={CalendarClock} label={t("g.qa.late")} hint={lateCheckoutRequest ? t("g.late.until", { hour: lateCheckoutRequest.hour }) : t("g.more.lateHint")} right={lateBadge} onClick={() => setLateOpen(true)} />
+        <Row icon={MapPin} label={t("ex.title")} hint={t("ex.home.hint")} onClick={() => navigate("/guest/explore")} />
         <Row icon={Briefcase} label={t("g.qa.bellboy")} hint={t("g.bell.subtitle")} onClick={() => setBellOpen(true)} />
         <Row
           icon={Headset}

@@ -59,6 +59,7 @@ function applyGuards(parsed: Classification, message: string) {
     out.assignedDepartment = "Front Office";
     out.isDirectAnswer = false;
     delete out.orderItems;
+    delete out.suggestExplore;
   }
   if (isAngry) {
     out.isAngryComplaint = true;

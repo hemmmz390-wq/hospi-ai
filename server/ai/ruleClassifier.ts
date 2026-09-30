@@ -73,6 +73,13 @@ const CHECKOUT_WORDS = ["checkout", "check-out", "check out", "late check", "チ
 const CHECKOUT_Q = ["jam berapa", "what time", "when is", "何時", "几点", "몇 시", "во сколько", "à quelle heure", "wann"];
 const BELLBOY_WORDS = ["luggage", "baggage", "bags", "suitcase", "koper", "barang bawaan", "bellboy", "porter", "荷物", "行李", "짐", "캐리어", "багаж", "чемодан", "bagages", "valise", "gepäck", "koffer"];
 
+const EXPLORE_WORDS = [
+  "wisata", "tempat wisata", "jalan-jalan", "jalan jalan", "tamasya", "objek wisata", "tempat menarik", "rekomendasi tempat",
+  "sightseeing", "attraction", "attractions", "things to do", "places to visit", "where to go", "explore", "day trip", "tourist spot",
+  "観光", "観光地", "見どころ", "旅游", "景点", "好玩", "관광", "명소", "가볼 만한",
+  "достопримечательност", "экскурси", "что посмотреть", "visiter", "à voir", "que faire", "tourisme", "sehenswürdigkeit", "sehenswürdigkeiten", "ausflug", "ausflüge", "ausflugsziel", "ausflugsziele", "was kann man",
+];
+
 const NUMBER_WORDS: Record<string, number> = {
   one: 1, two: 2, three: 3, four: 4, satu: 1, dua: 2, tiga: 3, empat: 4,
   deux: 2, trois: 3, zwei: 2, drei: 3,
@@ -227,6 +234,10 @@ function decide(lower: string, message: string, room: string, guest: string): Dr
   }
   if (has(lower, FOOD_WORDS)) {
     return { ...base("faq", "Food menu", "Food & Beverage", ""), isDirectAnswer: true, confidence: 0.9, suggestFoodMenu: true, replyKey: "reply.dining.menu" };
+  }
+
+  if (has(lower, EXPLORE_WORDS)) {
+    return { ...base("faq", "Places to visit", "Front Office", ""), isDirectAnswer: true, confidence: 0.95, suggestExplore: true, replyKey: "reply.explore" };
   }
 
   // 5. Late check-out → Front Office, menunggu persetujuan.

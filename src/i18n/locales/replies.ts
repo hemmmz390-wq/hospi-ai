@@ -44,6 +44,16 @@ export const replies = {
     fr: 'Wi-Fi de la chambre : « Hospi_Resort », mot de passe « azure2026 ».',
     de: 'Zimmer-WLAN: „Hospi_Resort“, Passwort „azure2026“.',
   },
+  "reply.explore": {
+    id: "Tentu! Di halaman Wisata sekitar ada tempat-tempat pilihan kami dekat hotel, lengkap dengan jarak, jam buka, dan perkiraan harga tiket. Kalau mau, kami siapkan mobil dan sopir ke sana.",
+    en: "Of course! The Explore page lists our favourite places near the hotel, with distance, opening hours and ticket prices. If you like, we can arrange a car and driver to take you there.",
+    ja: "もちろんです！「周辺の観光」ページに、ホテル近くのおすすめスポットを距離・営業時間・入場料つきでまとめています。車とドライバーの手配も承ります。",
+    ko: "물론입니다! '주변 관광' 페이지에 호텔 근처 추천 명소를 거리, 운영 시간, 입장료와 함께 정리해 두었습니다. 원하시면 차량과 기사도 준비해 드립니다.",
+    zh: "当然！“周边景点”页面列出了酒店附近的推荐地点，包括距离、开放时间和门票价格。如有需要，我们可以为您安排车辆和司机。",
+    ru: "Конечно! На странице «Что посмотреть рядом» собраны наши любимые места у отеля — с расстоянием, часами работы и ценами. Если хотите, организуем машину с водителем.",
+    fr: "Bien sûr ! La page « À découvrir autour » présente nos lieux préférés près de l'hôtel, avec distance, horaires et prix. Nous pouvons aussi organiser une voiture avec chauffeur.",
+    de: "Gern! Auf der Seite „Ausflüge in der Nähe“ finden Sie unsere Lieblingsorte mit Entfernung, Öffnungszeiten und Eintrittspreisen. Auf Wunsch organisieren wir ein Auto mit Fahrer.",
+  },
   "reply.faq.breakfast": {
     id: "Sarapan tersedia pukul 06:30–10:30 di The Azure Pavilion, lantai 1. Anda juga bisa memesan sarapan ke kamar lewat menu Makanan.",
     en: "Breakfast is served 06:30–10:30 at The Azure Pavilion on level 1. You can also order breakfast to your room from the Food menu.",
