@@ -3,7 +3,12 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 export type ThemeMode = "light" | "dark" | "system";
 export type TextSize = "normal" | "large" | "xlarge";
 
-const STORAGE_KEY = "hospi_theme_v1";
+/**
+ * Kunci v2: pilihan tema yang tersimpan sebelum mode terang dijadikan
+ * bawaan (v1) sengaja diabaikan, supaya semua pengunjung mulai terang.
+ */
+const STORAGE_KEY = "hospi_theme_v2";
+const LEGACY_KEYS = ["hospi_theme_v1"];
 const TEXT_KEY = "hospi_textsize_v1";
 
 /** Ukuran huruf dasar. Semua teks & jarak di aplikasi memakai rem, jadi ikut membesar. */
@@ -20,6 +25,7 @@ function readTextSize(): TextSize {
 
 function readStoredMode(): ThemeMode | null {
   try {
+    LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved === "light" || saved === "dark" || saved === "system" ? saved : null;
   } catch {
@@ -80,6 +86,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = document.documentElement;
     root.classList.toggle("dark", resolved === "dark");
     root.style.colorScheme = resolved;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", resolved === "dark" ? "#0e0e0d" : "#f7f7f5");
   }, [resolved]);
 
   const setMode = useCallback((m: ThemeMode) => {
