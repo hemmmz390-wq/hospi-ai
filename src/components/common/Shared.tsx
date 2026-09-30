@@ -9,8 +9,7 @@ import { cn } from "../../lib/cn";
 
 /**
  * Logo HOSPI AI: penutup saji (cloche) emas di atas gelembung chat hijau
- * dengan senyum emas. Di mode gelap gelembungnya berwarna krem supaya
- * tetap terlihat di latar gelap.
+ * dengan senyum emas. Warnanya sama di mode terang dan gelap.
  */
 export function BrandMark({ size = 28, withName = true, className }: { size?: number; withName?: boolean; className?: string }) {
   return (
@@ -19,7 +18,7 @@ export function BrandMark({ size = 28, withName = true, className }: { size?: nu
         <circle cx="32" cy="7.6" r="2.8" stroke="#c8a15a" strokeWidth="2.4" />
         <path d="M15.5 25C15.5 16.5 22.8 10.6 32 10.6S48.5 16.5 48.5 25" stroke="#c8a15a" strokeWidth="3" />
         <path d="M14 25H37" stroke="#c8a15a" strokeWidth="3" />
-        <path d="M24 28.5H40C48.5 28.5 54 34 54 41S48.5 53.5 40 53.5H27.5L15.5 59.5L18 50.8C13 48.8 10 45.3 10 41C10 34 15.5 28.5 24 28.5Z" className="stroke-[#134032] dark:stroke-[#e9e2d0]" strokeWidth="3.2" />
+        <path d="M24 28.5H40C48.5 28.5 54 34 54 41S48.5 53.5 40 53.5H27.5L15.5 59.5L18 50.8C13 48.8 10 45.3 10 41C10 34 15.5 28.5 24 28.5Z" stroke="#134032" strokeWidth="3.2" />
         <path d="M24.5 41C29 45.6 35 45.6 39.5 41" stroke="#c8a15a" strokeWidth="3" />
       </svg>
       {withName && <span className="text-[0.9375rem] font-semibold tracking-tight">HOSPI AI</span>}
