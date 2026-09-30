@@ -12,8 +12,8 @@ export function BrandMark({ size = 28, withName = true, className }: { size?: nu
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden className="shrink-0">
-        <rect width="32" height="32" rx="8" className="fill-fg" />
-        <path d="M10 9v14M22 9v14M10 16h12" className="stroke-inverse" strokeWidth="2.6" strokeLinecap="round" />
+        <rect width="32" height="32" rx="8" fill="#134032" />
+        <path d="M10 9v14M22 9v14M10 16h12" stroke="#c8a15a" strokeWidth="2.6" strokeLinecap="round" />
       </svg>
       {withName && <span className="text-[0.9375rem] font-semibold tracking-tight">HOSPI AI</span>}
     </span>

@@ -122,7 +122,7 @@ function Feature({ icon: Icon, title, body }: { icon: React.ComponentType<{ clas
 function SectionHead({ eyebrow, title, body, id }: { eyebrow: string; title: string; body?: string; id?: string }) {
   return (
     <div className="max-w-2xl">
-      <p className="text-[0.8125rem] font-medium text-muted">{eyebrow}</p>
+      <p className="text-[0.8125rem] font-medium tracking-wide text-accent-fg">{eyebrow}</p>
       <h2 id={id} className="mt-2 text-[1.75rem] font-semibold leading-tight tracking-tight sm:text-[2.125rem]">
         {title}
       </h2>
@@ -199,7 +199,7 @@ export default function Landing() {
         <section aria-labelledby="demo-title" className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
           <div className="rounded-2xl border border-line bg-surface p-5 sm:p-8">
             <div className="max-w-2xl">
-              <p className="text-[0.8125rem] font-medium text-muted">{t("lp.demo.eyebrow")}</p>
+              <p className="text-[0.8125rem] font-medium tracking-wide text-accent-fg">{t("lp.demo.eyebrow")}</p>
               <h2 id="demo-title" className="mt-2 text-2xl font-semibold tracking-tight">{t("lp.demo.title")}</h2>
             </div>
             <div className="mt-8 grid items-center gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
