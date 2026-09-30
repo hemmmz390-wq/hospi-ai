@@ -157,7 +157,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         end={item.end}
         onClick={onNavigate}
         className={({ isActive }) =>
-          cn("flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[0.8125rem] font-medium transition-colors", isActive ? "bg-sunken text-fg shadow-[inset_2px_0_0_var(--accent)]" : "text-muted hover:bg-sunken/70 hover:text-fg")
+          cn("flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[0.8125rem] font-medium transition-colors", isActive ? "bg-sunken text-fg" : "text-muted hover:bg-sunken/70 hover:text-fg")
         }
       >
         <item.icon className="h-4 w-4 shrink-0" />

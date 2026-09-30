@@ -77,7 +77,6 @@ function BottomNav() {
             >
               {({ isActive }) => (
                 <>
-                  {isActive && <span aria-hidden className="absolute inset-x-1/4 top-0 h-0.5 rounded-full bg-accent" />}
                   <span className="relative">
                     <Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.2 : 1.8} />
                     {badge ? (

@@ -5,55 +5,46 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ------------------------------------------------------------------
-   Token warna — palet brand HOSPI AI:
-   Forest Green #134032 (warna utama), Premium Gold #C8A15A (aksen),
-   Warm Beige #F6F1E6 (latar). Warna status (sukses, peringatan,
-   kritis) tetap terpisah supaya keadaan tiket selalu terbaca.
+   Token warna. Warna dipakai untuk MENYAMPAIKAN KEADAAN (sukses,
+   peringatan, kritis), bukan untuk hiasan. Hampir semua permukaan
+   netral; hitam adalah warna utama.
    ------------------------------------------------------------------ */
 :root {
-  --canvas: #f6f1e6;
-  --surface: #fffdf8;
-  --sunken: #efe8d9;
-  --hover: #e7dec9;
-  --fg: #134032;
-  --muted: #5b6a61;
-  --subtle: #83908a;
-  --line: #e3dac8;
-  --line-strong: #d0c4ab;
-  --inverse: #f6f1e6;
-
-  --accent: #c8a15a;
-  --accent-soft: #f3e8d2;
-  --accent-fg: #7a5b22;
+  --canvas: #f7f7f5;
+  --surface: #ffffff;
+  --sunken: #f1f1ee;
+  --hover: #ebebe7;
+  --fg: #111111;
+  --muted: #6b6b68;
+  --subtle: #8e8e8a;
+  --line: #e5e5e1;
+  --line-strong: #d4d4cf;
+  --inverse: #ffffff;
 
   --ok: #1f7a55;
-  --ok-soft: #e6f1ea;
+  --ok-soft: #e8f3ee;
   --warn: #a66a00;
-  --warn-soft: #faefd9;
+  --warn-soft: #fbf2e1;
   --crit: #b42318;
-  --crit-soft: #fbe9e6;
+  --crit-soft: #fcebea;
 
-  --shadow-pop: 0 12px 32px -12px rgb(19 64 50 / 0.2), 0 2px 6px -2px rgb(19 64 50 / 0.08);
+  --shadow-pop: 0 12px 32px -12px rgb(17 17 17 / 0.18), 0 2px 6px -2px rgb(17 17 17 / 0.06);
 }
 
 .dark {
-  --canvas: #0b1712;
-  --surface: #10211a;
-  --sunken: #152a21;
-  --hover: #1c3429;
-  --fg: #f6f1e6;
-  --muted: #a8b4ab;
-  --subtle: #7d8b82;
-  --line: #213a2f;
-  --line-strong: #2f4b3e;
-  --inverse: #134032;
-
-  --accent: #d4b274;
-  --accent-soft: #2b2515;
-  --accent-fg: #dcbf86;
+  --canvas: #0e0e0d;
+  --surface: #161615;
+  --sunken: #1c1c1a;
+  --hover: #242422;
+  --fg: #f2f2ef;
+  --muted: #a3a39e;
+  --subtle: #7a7a76;
+  --line: #2a2a27;
+  --line-strong: #3a3a36;
+  --inverse: #111111;
 
   --ok: #4cb384;
-  --ok-soft: #12271d;
+  --ok-soft: #13261d;
   --warn: #dba43a;
   --warn-soft: #2a2110;
   --crit: #f07a6e;
@@ -75,9 +66,6 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-inverse: var(--inverse);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-fg: var(--accent-fg);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
@@ -126,8 +114,8 @@
     color: var(--fg);
   }
   ::selection {
-    background: var(--accent-soft);
-    color: var(--fg);
+    background: var(--fg);
+    color: var(--inverse);
   }
   :focus-visible {
     outline: 2px solid var(--fg);
