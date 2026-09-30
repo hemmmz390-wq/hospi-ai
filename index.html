@@ -16,9 +16,10 @@
       (function () {
         try {
           var saved = localStorage.getItem("hospi_theme_v1");
+          // Pengunjung baru (belum pernah memilih tema) mulai di mode terang.
           var dark =
             saved === "dark" ||
-            ((!saved || saved === "system") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+            (saved === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
           document.documentElement.classList.toggle("dark", dark);
           document.documentElement.style.colorScheme = dark ? "dark" : "light";
           var size = localStorage.getItem("hospi_textsize_v1");

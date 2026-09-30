@@ -46,7 +46,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setModeState] = useState<ThemeMode>(() => readStoredMode() || "system");
+  const [mode, setModeState] = useState<ThemeMode>(() => readStoredMode() || "light"); // Pengunjung baru selalu mulai di mode terang.
   const [systemDark, setSystemDark] = useState<boolean>(systemPrefersDark);
   const [textSize, setTextSizeState] = useState<TextSize>(readTextSize);
 
