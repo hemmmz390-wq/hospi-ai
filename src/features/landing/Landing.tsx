@@ -186,9 +186,10 @@ export default function Landing() {
                 ))}
               </ul>
             </div>
-            <div className="relative mx-auto w-full max-w-md">
+            {/* Kartu tiket menumpuk di tepi bawah ponsel saja, supaya balasan AI dan pelacak tetap terbaca. */}
+            <div className="relative mx-auto w-full max-w-md sm:mb-20">
               <PhoneMock />
-              <div className="mt-4 flex justify-center sm:absolute sm:-right-2 sm:bottom-10 sm:mt-0 lg:-right-10">
+              <div className="mt-4 flex justify-center sm:absolute sm:-bottom-20 sm:-right-2 sm:mt-0 lg:-right-10">
                 <RoutedCard />
               </div>
             </div>
