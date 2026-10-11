@@ -8,6 +8,7 @@ import { guestNameFor } from "../../lib/privacy";
 import { cn } from "../../lib/cn";
 import { Kbd } from "../../components/ui";
 import { ticketsForRole } from "./staffUtils";
+import { ticketTitle } from "../../lib/ticketText";
 
 type Result = { key: string; group: "rooms" | "tickets" | "orders" | "guests"; label: string; sub: string; run: () => void };
 
@@ -66,7 +67,7 @@ export function GlobalSearch({ open, onClose, onOpenTicket, onOpenRoom }: { open
           key: `t-${x.id}`,
           group: x.order ? "orders" : "tickets",
           label: x.order ? `${x.order.id} · ${x.id}` : x.id,
-          sub: `${t("search.room", { room: x.room })} · ${x.taskTitle}`,
+          sub: `${t("search.room", { room: x.room })} · ${ticketTitle(t, x)}`,
           run: () => onOpenTicket(x.id),
         })
       );

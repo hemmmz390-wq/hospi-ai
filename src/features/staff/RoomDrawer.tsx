@@ -11,6 +11,7 @@ import { Badge, Button, Overlay } from "../../components/ui";
 import { SlaTimer, StatusBadge } from "../../components/domain";
 import { seesEverything } from "./staffUtils";
 import type { Tone } from "../../lib/ticketView";
+import { ticketTitle } from "../../lib/ticketText";
 
 export const ROOM_STATUS_META: Record<RoomStatus, { key: TranslationKey; tone: Tone }> = {
   Occupied: { key: "rs.occupied", tone: "neutral" },
@@ -150,7 +151,7 @@ export function RoomDrawer({ roomNo, onClose, onOpenTicket }: { roomNo: string |
                 <li key={x.id}>
                   <button type="button" onClick={() => onOpenTicket(x.id)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-sunken">
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{x.taskTitle}</span>
+                      <span className="block truncate text-sm font-medium">{ticketTitle(t, x)}</span>
                       <span className="text-xs tabular-nums text-muted">{x.order?.id || x.id}</span>
                     </span>
                     <StatusBadge ticket={x} />

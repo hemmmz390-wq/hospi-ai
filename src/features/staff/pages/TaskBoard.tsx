@@ -10,6 +10,7 @@ import { cn } from "../../../lib/cn";
 import { Button, Card, EmptyState, Input, Segmented } from "../../../components/ui";
 import { CategoryIcon, EscalatedBadge, PriorityBadge, SlaTimer, StatusBadge } from "../../../components/domain";
 import { byUrgency, isFresh, isToday, useDetailParams, useRoleTickets } from "../staffUtils";
+import { ticketTitle } from "../../../lib/ticketText";
 
 type Kind = "housekeeping" | "maintenance";
 
@@ -60,7 +61,7 @@ function TaskCard({ ticket, kind, onOpen }: { ticket: ServiceTicket; kind: Kind;
         <div className="min-w-0 flex-1">
           <p className="flex items-center gap-1.5 text-sm font-semibold">
             <CategoryIcon category={ticket.category} className="h-3.5 w-3.5 text-muted" />
-            <span className="truncate">{isDelivery ? t("tb.deliverOrder", { id: ticket.order?.id || ticket.id }) : ticket.taskTitle}</span>
+            <span className="truncate">{isDelivery ? t("tb.deliverOrder", { id: ticket.order?.id || ticket.id }) : ticketTitle(t, ticket)}</span>
           </p>
           <p className="mt-0.5 text-xs text-muted">
             {t(categoryKey(ticket.category))}

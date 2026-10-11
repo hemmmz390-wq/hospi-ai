@@ -158,7 +158,10 @@ export function SettingsPage() {
             ))}
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
-            <span className="text-[0.8125rem] text-muted">{t("set.yourLanguage")}</span>
+            <span>
+              <span className="block text-[0.8125rem] font-medium">{t("set.staffLanguage")}</span>
+              <span className="block max-w-md text-xs text-muted">{t("set.staffLanguageHint")}</span>
+            </span>
             <LanguageMenu />
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">

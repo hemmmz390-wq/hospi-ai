@@ -324,19 +324,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next: Session = { kind: "guest", room: trimmed };
       setSession(next);
       sessionService.save(next);
-      // Bahasa profil tamu dipakai hanya bila tamu belum memilih bahasa sendiri.
-      let chosen: string | null = null;
-      try {
-        chosen = localStorage.getItem("hospi_locale_v1");
-      } catch {
-        /* abaikan */
-      }
-      if (!chosen && room.guestLocale && (LOCALES as readonly string[]).includes(room.guestLocale)) {
-        setLocale(room.guestLocale as Locale);
-      }
+      // Bahasa kamar diatur aplikasi tamu sendiri (lingkup bahasa per kamar).
       return true;
     },
-    [rooms, setLocale]
+    [rooms]
   );
 
   const signOutRoom = useCallback(() => {

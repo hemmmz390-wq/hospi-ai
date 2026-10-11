@@ -12,6 +12,7 @@ import { SlaTimer, StatusBadge } from "../../../components/domain";
 import { byUrgency, useDetailParams } from "../staffUtils";
 import { PanelHeader, Stat } from "./widgets";
 import { deptKey } from "../../guest/components";
+import { ticketTitle } from "../../../lib/ticketText";
 
 function Rows({ tickets, onOpen, right }: { tickets: ServiceTicket[]; onOpen: (id: string) => void; right?: (t: ServiceTicket) => React.ReactNode }) {
   const { t } = useI18n();
@@ -22,7 +23,7 @@ function Rows({ tickets, onOpen, right }: { tickets: ServiceTicket[]; onOpen: (i
           <button type="button" onClick={() => onOpen(x.id)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-sunken/60">
             <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-sunken text-[0.8125rem] font-semibold tabular-nums">{x.room}</span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[0.8125rem] font-medium">{x.taskTitle}</span>
+              <span className="block truncate text-[0.8125rem] font-medium">{ticketTitle(t, x)}</span>
               <span className="block truncate text-xs text-muted tabular-nums">
                 {x.order?.id || x.id} · {t(deptKey(x.dept))}
               </span>
@@ -121,7 +122,7 @@ export function DutyManagerOverview() {
                     <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-sunken text-[0.8125rem] font-semibold tabular-nums">{x.room}</span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-[0.8125rem] font-medium">{x.taskTitle}</span>
+                        <span className="truncate text-[0.8125rem] font-medium">{ticketTitle(t, x)}</span>
                         <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-crit">
                           <Star className="h-3 w-3" fill="currentColor" />
                           {x.guest_score || 1}/5

@@ -18,7 +18,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { useI18n, TranslationKey } from "../../i18n";
+import { useI18n, TranslationKey, useLocaleScope, STAFF_LOCALE_KEY, STAFF_DEFAULT_LOCALE } from "../../i18n";
 import { Role } from "../../types";
 import { cn } from "../../lib/cn";
 import { Avatar, IconButton, Kbd, Popover } from "../../components/ui";
@@ -194,6 +194,8 @@ const TITLES: Record<string, TranslationKey> = {
 };
 
 export default function StaffApp() {
+  // Satu bahasa untuk semua staf, diatur di Front Office (Pengaturan → Bahasa).
+  useLocaleScope(STAFF_LOCALE_KEY, STAFF_DEFAULT_LOCALE);
   const { role } = useApp();
   const { t } = useI18n();
   const { pathname } = useLocation();

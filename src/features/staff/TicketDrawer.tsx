@@ -14,6 +14,8 @@ import { deptKey } from "../guest/components";
 import { ROLE_DEPT, seesEverything } from "./staffUtils";
 import { pickupLabel } from "../guest/guestUtils";
 import { ATTRACTIONS, mapsUrl } from "../../data/attractions";
+import { languageName, operationalText, ticketTitle } from "../../lib/ticketText";
+import { LOCALE_META } from "../../i18n/types";
 
 type Mode = null | "defer" | "transfer" | "reassign" | "cancel" | "priority" | "merge" | "note" | "compensate" | "decline";
 
@@ -57,7 +59,7 @@ function Stars({ n }: { n: number }) {
 export function TicketDrawer({ ticketId, onClose, onOpenTicket }: { ticketId: string | null; onClose: () => void; onOpenTicket: (id: string) => void }) {
   const app = useApp();
   const { tickets, rooms, role, currentStaff } = app;
-  const { t, formatCurrency } = useI18n();
+  const { t, formatCurrency, locale } = useI18n();
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>(null);
   const [text, setText] = useState("");
@@ -203,7 +205,7 @@ export function TicketDrawer({ ticketId, onClose, onOpenTicket }: { ticketId: st
           {ticket.order && <span className="text-sm font-normal text-muted">{ticket.id}</span>}
         </span>
       }
-      description={`${t("search.room", { room: ticket.room })} · ${ticket.taskTitle}`}
+      description={`${t("search.room", { room: ticket.room })} · ${ticketTitle(t, ticket)}`}
       footer={
         mode ? (
           <div className="w-full space-y-3">
@@ -244,7 +246,7 @@ export function TicketDrawer({ ticketId, onClose, onOpenTicket }: { ticketId: st
                 <option value="">{t("tk.pickDuplicate")}</option>
                 {duplicates.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.id} · {d.taskTitle}
+                    {d.id} · {ticketTitle(t, d)}
                   </option>
                 ))}
               </Select>
@@ -329,15 +331,16 @@ export function TicketDrawer({ ticketId, onClose, onOpenTicket }: { ticketId: st
             <div>
               <p className="flex items-center gap-1.5 text-xs text-muted">
                 <Languages className="h-3.5 w-3.5" />
-                {t("tk.original", { lang: ticket.originalLanguage })}
+                {t("tk.original", { lang: languageName(ticket.originalLanguage, locale) })}
               </p>
               <p className="mt-1 text-sm" lang={room?.guestLocale}>
                 “{ticket.raw_text}”
               </p>
             </div>
             <div className="border-t border-line pt-3">
-              <p className="text-xs text-muted">{t("tk.operational")}</p>
-              <p className="mt-1 text-sm">{ticket.translatedRequest}</p>
+              {/* Instruksi mengikuti bahasa staf yang diatur Front Office. */}
+              <p className="text-xs text-muted">{t("op.title", { lang: languageName(LOCALE_META[locale].name, locale) })}</p>
+              <p className="mt-1 text-sm">{operationalText(t, ticket, locale)}</p>
             </div>
           </div>
         </section>

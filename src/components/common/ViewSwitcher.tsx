@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeftRight, Check, ChefHat, Layers, MonitorSmartphone, ShieldCheck, Smartphone, Sparkles, Wrench } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { useI18n, TranslationKey } from "../../i18n";
+import { useI18n, TranslationKey, LOCALES, LOCALE_META, Locale, storedGuestLocale } from "../../i18n";
 import { Role } from "../../types";
 import { cn } from "../../lib/cn";
 import { Overlay } from "../ui";
@@ -59,7 +59,10 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {GUEST_ROOMS.map((no) => {
                 const current = sessionKind === "guest" && guest.roomNumber === no;
-                const name = rooms.find((r) => r.roomNumber === no)?.guestName.split(" ")[0] || "";
+                const room = rooms.find((r) => r.roomNumber === no);
+                const name = room?.guestName.split(" ")[0] || "";
+                const profile = (LOCALES as readonly string[]).includes(room?.guestLocale || "") ? (room!.guestLocale as Locale) : "en";
+                const lang = LOCALE_META[storedGuestLocale(no, profile)].nativeName;
                 return (
                   <button
                     key={no}
@@ -71,7 +74,7 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
                     )}
                   >
                     <span className="text-base font-semibold">{t("g.roomShort", { room: no })}</span>
-                    <span className={cn("text-[0.8125rem]", current ? "text-inverse/80" : "text-muted")}>{name}</span>
+                    <span className={cn("text-[0.8125rem]", current ? "text-inverse/80" : "text-muted")}>{name} · {lang}</span>
                   </button>
                 );
               })}

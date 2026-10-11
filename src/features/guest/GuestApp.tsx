@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Home, ClipboardList, UtensilsCrossed, MessageCircle, Menu as MenuIcon, Siren } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { useI18n } from "../../i18n";
+import { useI18n, useLocaleScope, guestLocaleKey, detectBrowserLocale, LOCALES, Locale } from "../../i18n";
 import { cn } from "../../lib/cn";
 import { LanguageMenu } from "../../components/common/Shared";
 import { ViewSwitcher } from "../../components/common/ViewSwitcher";
@@ -98,6 +98,13 @@ function BottomNav() {
 }
 
 function Shell() {
+  const { guest, rooms } = useApp();
+  // Tiap kamar punya bahasanya sendiri: bawaan dari profil tamu, lalu pilihan tamu.
+  const profileLocale = rooms.find((r) => r.roomNumber === guest.roomNumber)?.guestLocale;
+  useLocaleScope(
+    guestLocaleKey(guest.roomNumber),
+    (LOCALES as readonly string[]).includes(profileLocale || "") ? (profileLocale as Locale) : detectBrowserLocale()
+  );
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const { pathname } = useLocation();
   const sheets = useMemo(() => ({ openEmergency: () => setEmergencyOpen(true) }), []);

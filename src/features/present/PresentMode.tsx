@@ -2,7 +2,8 @@ import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChefHat, Layers, RotateCcw, ShieldCheck, Sparkles, Wrench, X, Play, Wifi, WifiOff } from "lucide-react";
 import { useApp } from "../../context/AppContext";
-import { useI18n, TranslationKey } from "../../i18n";
+import { useI18n, TranslationKey, LOCALES, LOCALE_META, Locale, storedGuestLocale } from "../../i18n";
+import { dictionary } from "../../i18n/dictionary";
 import { Role } from "../../types";
 import { cn } from "../../lib/cn";
 import { BrandMark, LanguageMenu } from "../../components/common/Shared";
@@ -45,8 +46,16 @@ export default function PresentMode() {
   const [staffKey, setStaffKey] = useState(0);
   const guestFrame = useRef<HTMLIFrameElement>(null);
 
+  // Bahasa tamu di kamar ini: pilihan tamu, atau bahasa di profilnya.
+  const roomLocale = (no: string): Locale => {
+    const profile = rooms.find((r) => r.roomNumber === no)?.guestLocale;
+    return storedGuestLocale(no, (LOCALES as readonly string[]).includes(profile || "") ? (profile as Locale) : "en");
+  };
+
   const runScenario = (s: (typeof SCENARIOS)[number]) => {
-    guestFrame.current?.contentWindow?.postMessage({ type: "hospi:send", text: t(s.text) }, window.location.origin);
+    // Pesan skenario dikirim dalam bahasa tamu, seperti tamu sungguhan.
+    const text = dictionary[s.text][roomLocale(room)];
+    guestFrame.current?.contentWindow?.postMessage({ type: "hospi:send", text }, window.location.origin);
     if (s.role !== role) {
       setRole(s.role);
       setStaffKey((k) => k + 1);
@@ -56,7 +65,7 @@ export default function PresentMode() {
   const guestName = rooms.find((r) => r.roomNumber === room)?.guestName || "";
 
   return (
-    <div className="flex h-dvh flex-col bg-canvas">
+    <div className="flex min-h-dvh flex-col bg-canvas lg:h-dvh">
       <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-surface px-4 py-2.5">
         <div className="flex items-center gap-3">
           <BrandMark />
@@ -100,7 +109,7 @@ export default function PresentMode() {
             type="button"
             onClick={() => runScenario(s)}
             className="h-8 rounded-full border border-line bg-surface px-3 text-[0.8125rem] hover:border-line-strong hover:bg-sunken"
-            title={t(s.text)}
+            title={dictionary[s.text][roomLocale(room)]}
           >
             {t(s.label)}
           </button>
@@ -119,11 +128,11 @@ export default function PresentMode() {
                 setRoom(e.target.value);
                 setGuestKey((k) => k + 1);
               }}
-              className="h-8 w-40 text-[0.8125rem]"
+              className="h-8 w-56 text-[0.8125rem]"
             >
               {ROOMS.map((r) => (
                 <option key={r} value={r}>
-                  {t("g.roomShort", { room: r })} · {rooms.find((x) => x.roomNumber === r)?.guestName.split(" ")[0]}
+                  {t("g.roomShort", { room: r })} · {rooms.find((x) => x.roomNumber === r)?.guestName.split(" ")[0]} · {LOCALE_META[roomLocale(r)].nativeName}
                 </option>
               ))}
             </Select>

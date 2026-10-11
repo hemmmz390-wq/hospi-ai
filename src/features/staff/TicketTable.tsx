@@ -9,6 +9,7 @@ import { cn } from "../../lib/cn";
 import { PriorityBadge, SlaTimer, StatusBadge, EscalatedBadge } from "../../components/domain";
 import { deptKey } from "../guest/components";
 import { isFresh } from "./staffUtils";
+import { ticketTitle } from "../../lib/ticketText";
 
 /**
  * Antrean tiket. Kolomnya mengikuti spesifikasi: Tiket, Kamar, Permintaan,
@@ -51,7 +52,7 @@ export function TicketTable({ tickets, onOpen, showDept = true, empty }: { ticke
                 <td className="px-3 py-3 font-medium tabular-nums">{x.room}</td>
                 <td className="max-w-[280px] px-3 py-3">
                   <span className="flex items-center gap-2">
-                    <span className="truncate">{x.taskTitle}</span>
+                    <span className="truncate">{ticketTitle(t, x)}</span>
                     <EscalatedBadge ticket={x} />
                   </span>
                 </td>
@@ -74,7 +75,7 @@ export function TicketTable({ tickets, onOpen, showDept = true, empty }: { ticke
               <span className="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg bg-sunken text-[0.8125rem] font-semibold tabular-nums">{x.room}</span>
               <span className="min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium">{x.taskTitle}</span>
+                  <span className="truncate text-sm font-medium">{ticketTitle(t, x)}</span>
                   <SlaTimer ticket={x} variant="cell" />
                 </span>
                 <span className="mt-0.5 block text-xs text-muted tabular-nums">

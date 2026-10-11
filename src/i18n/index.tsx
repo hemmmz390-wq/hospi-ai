@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { Locale, LOCALES, LOCALE_META } from "./types";
 import { dictionary, TranslationKey } from "./dictionary";
 export type { TranslationKey };
@@ -25,9 +25,9 @@ export function detectBrowserLocale(): Locale {
   return "id";
 }
 
-function readStoredLocale(): Locale | null {
+function readStoredLocale(key: string = STORAGE_KEY): Locale | null {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(key);
     return LOCALES.find((l) => l === saved) || null;
   } catch {
     return null;
@@ -36,8 +36,19 @@ function readStoredLocale(): Locale | null {
 
 type Vars = Record<string, string | number>;
 
+/**
+ * Bahasa disimpan per "lingkup": tiap kamar tamu punya bahasanya sendiri
+ * (bawaan: bahasa di profil tamu), staf punya satu bahasa bersama yang diatur
+ * Front Office, dan halaman umum (landing, demo) memakai lingkup umum.
+ * Dengan begitu tamu Jepang di 501 dan tamu Inggris di 508 tampil berbeda,
+ * sementara laporan staf mengikuti bahasa staf.
+ */
+type Scope = { key: string; fallback: Locale };
+
 interface I18nContextValue {
   locale: Locale;
+  /** Pindah lingkup bahasa. Dipakai lewat useLocaleScope(). */
+  setScope: (key: string, fallback: Locale) => void;
   setLocale: (l: Locale) => void;
   /** Terjemahkan sebuah key. `vars` mengisi placeholder bergaya {nama}. */
   t: (key: TranslationKey, vars?: Vars) => string;
@@ -55,11 +66,17 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [locale, setLocaleState] = useState<Locale>(
     () => readStoredLocale() || detectBrowserLocale()
   );
+  const scopeRef = useRef<Scope>({ key: STORAGE_KEY, fallback: detectBrowserLocale() });
+
+  const setScope = useCallback((key: string, fallback: Locale) => {
+    scopeRef.current = { key, fallback };
+    setLocaleState(readStoredLocale(key) || fallback);
+  }, []);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     try {
-      localStorage.setItem(STORAGE_KEY, l);
+      localStorage.setItem(scopeRef.current.key, l);
     } catch {
       /* mode privat: cukup simpan di memori */
     }
@@ -106,6 +123,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <I18nContext.Provider
       value={{
         locale,
+        setScope,
         setLocale,
         t,
         formatCurrency,
@@ -123,6 +141,29 @@ export function useI18n(): I18nContextValue {
   const ctx = useContext(I18nContext);
   if (!ctx) throw new Error("useI18n harus dipakai di dalam <I18nProvider>");
   return ctx;
+}
+
+/**
+ * Pakai lingkup bahasa selama komponen ini tampil, lalu kembali ke lingkup
+ * umum. useLayoutEffect: bahasa sudah benar sebelum layar pertama digambar.
+ */
+export function useLocaleScope(key: string, fallback: Locale) {
+  const { setScope } = useI18n();
+  useLayoutEffect(() => {
+    setScope(key, fallback);
+  }, [key, fallback, setScope]);
+  useLayoutEffect(() => () => setScope(STORAGE_KEY, readStoredLocale() || detectBrowserLocale()), [setScope]);
+}
+
+/** Kunci penyimpanan bahasa per kamar tamu dan untuk staf. */
+export const guestLocaleKey = (room: string) => `hospi_locale_room_${room}`;
+export const STAFF_LOCALE_KEY = "hospi_locale_staff";
+/** Bahasa laporan staf bila Front Office belum memilih. */
+export const STAFF_DEFAULT_LOCALE: Locale = "id";
+
+/** Bahasa yang sedang dipakai tamu di kamar tertentu (untuk mode presentasi). */
+export function storedGuestLocale(room: string, fallback: Locale): Locale {
+  return readStoredLocale(guestLocaleKey(room)) || fallback;
 }
 
 export type { Locale };
