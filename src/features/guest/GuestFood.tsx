@@ -286,7 +286,11 @@ export function GuestFood() {
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-ok" />
-              <p className="text-sm">{t("g.food.placedBody", { room: placedTicket.room })}</p>
+              <p className="text-sm">
+                {placedTicket.diningDestination === "table"
+                  ? t("g.food.placedBodyTable", { table: placedTicket.tableNumber || "—", room: placedTicket.room })
+                  : t("g.food.placedBody", { room: placedTicket.room })}
+              </p>
             </div>
             <RequestProgress ticket={placedTicket} />
           </div>

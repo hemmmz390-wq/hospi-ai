@@ -5,7 +5,7 @@ import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { ChatMessage, UpsellOffer } from "../../types";
 import { FOOD_MENU } from "../../data/menu";
-import { Button, IconButton } from "../../components/ui";
+import { Button, IconButton, Segmented } from "../../components/ui";
 import { cn } from "../../lib/cn";
 import { deptKey, RequestProgress } from "./components";
 import { VoiceSheet } from "./sheets/VoiceSheet";
@@ -29,11 +29,13 @@ function TicketChip({ ticketId }: { ticketId: string }) {
 }
 
 function OrderDraftCard({ message }: { message: ChatMessage }) {
-  const { confirmOrderDraft } = useApp();
+  const { confirmOrderDraft, guest } = useApp();
   const { t, formatCurrency } = useI18n();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const draft = message.orderDraft!;
+  // Tamu memilih: diantar ke kamar atau makan di restoran.
+  const [destination, setDestination] = useState<"room" | "table">(draft.destination || "room");
   const lines = draft.items.map((i) => ({ ...i, item: FOOD_MENU.find((m) => m.id === i.menuId) })).filter((l) => l.item);
   const total = lines.reduce((n, l) => n + l.qty * l.item!.price, 0);
 
@@ -55,6 +57,19 @@ function OrderDraftCard({ message }: { message: ChatMessage }) {
         <span>{t("g.food.total")}</span>
         <span className="tabular-nums">{formatCurrency(total)}</span>
       </div>
+      <div className="border-t border-line px-3 py-2">
+        <Segmented
+          label={t("g.food.deliverTo")}
+          value={destination}
+          onChange={setDestination}
+          size="sm"
+          className="w-full"
+          options={[
+            { value: "room", label: t("g.food.toRoom", { room: guest.roomNumber }) },
+            { value: "table", label: t("g.food.dineIn") },
+          ]}
+        />
+      </div>
       <div className="flex gap-2 border-t border-line p-2">
         <Button size="sm" variant="ghost" onClick={() => navigate("/guest/food")}>
           {t("g.chat.changeOrder")}
@@ -66,7 +81,7 @@ function OrderDraftCard({ message }: { message: ChatMessage }) {
           disabled={busy}
           onClick={async () => {
             setBusy(true);
-            await confirmOrderDraft(message.id);
+            await confirmOrderDraft(message.id, undefined, destination);
             setBusy(false);
           }}
         >

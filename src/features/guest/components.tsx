@@ -57,7 +57,7 @@ export function RequestProgress({ ticket, compact }: { ticket: ServiceTicket; co
         compact={compact}
         current={orderStep(ticket)}
         tone={orderStep(ticket) === 3 ? "ok" : "neutral"}
-        steps={[t("g.step.received"), t("g.step.preparing"), t("g.step.ready"), t("g.step.delivered")]}
+        steps={[t("g.step.received"), t("g.step.preparing"), t("g.step.ready"), t(ticket.diningDestination === "table" ? "g.step.served" : "g.step.delivered")]}
       />
     );
   }
@@ -88,6 +88,7 @@ export function RequestCard({ ticket, onOpen }: { ticket: ServiceTicket; onOpen:
             </div>
             <p className="mt-0.5 text-[0.8125rem] text-muted">
               {t(deptKey(ticket.dept))} · {ticket.order?.id || ticket.id}
+              {ticket.diningDestination === "table" && ` · ${t("g.food.atTable", { table: ticket.tableNumber || "—" })}`}
             </p>
           </div>
         </div>

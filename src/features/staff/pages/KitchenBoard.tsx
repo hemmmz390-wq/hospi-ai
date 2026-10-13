@@ -29,7 +29,7 @@ function OrderCard({ ticket, onOpen }: { ticket: ServiceTicket; onOpen: () => vo
   if (ticket.status === "BARU") action = <Button size="sm" variant="primary" block onClick={() => acceptTicket(ticket.id, me)}>{t("tk.accept")}</Button>;
   else if (ticket.status === "DITERIMA" || ticket.status === "DIALIHKAN") action = <Button size="sm" variant="primary" block onClick={() => startTicket(ticket.id, me)}>{t("tk.startPreparing")}</Button>;
   else if (ticket.status === "DIKERJAKAN") action = <Button size="sm" variant="primary" block onClick={() => markOrderReady(ticket.id, me)}>{t("tk.markReady")}</Button>;
-  else if (ticket.status === "SIAP") action = <Button size="sm" variant="secondary" block onClick={() => completeTicket(ticket.id, me)}>{t("tk.markDelivered")}</Button>;
+  else if (ticket.status === "SIAP") action = <Button size="sm" variant="secondary" block onClick={() => completeTicket(ticket.id, me)}>{t(ticket.diningDestination === "table" ? "tk.markServed" : "tk.markDelivered")}</Button>;
 
   return (
     <Card as="li" className={cn("p-3.5", isFresh(ticket, now) && "animate-flash")}>

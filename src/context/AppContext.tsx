@@ -150,7 +150,7 @@ interface AppContextType {
     destination?: DiningDestination,
     tableNumber?: string
   ) => Promise<ServiceTicket | undefined>;
-  confirmOrderDraft: (messageId: string, notes?: string) => Promise<ServiceTicket | undefined>;
+  confirmOrderDraft: (messageId: string, notes?: string, destination?: DiningDestination) => Promise<ServiceTicket | undefined>;
   assignTableNumber: () => string;
   markOrderReady: (ticketId: string, readyBy: string) => void;
   requestLateCheckout: (requestedHour: string, reason?: string) => Promise<void>;
@@ -215,6 +215,9 @@ const ROLE_FOR_DEPT: Record<Department, AppNotification["targetRole"]> = {
   "Duty Manager": "duty_manager",
   "Food & Beverage": "food_beverage",
 };
+
+/** Tamu menyebut ingin makan di restoran, bukan diantar ke kamar. */
+const DINE_IN_WORDS = /restoran|resto\b|makan di (sana|tempat)|dine[- ]?in|restaurant|レストラン|餐厅|식당|ресторан|sur place|im restaurant/i;
 
 const languageFor = (code: string): Language =>
   SUPPORTED_LANGUAGES.find((l) => l.code === code) || SUPPORTED_LANGUAGES[1];
@@ -1050,17 +1053,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const confirmOrderDraft = useCallback(
-    async (messageId: string, notes?: string) => {
+    async (messageId: string, notes?: string, destination: DiningDestination = "room") => {
       const msg = (chatsByRoom[guestRoom] || []).find((m) => m.id === messageId);
       if (!msg?.orderDraft || msg.orderDraft.confirmedTicketId) return undefined;
       const cart = msg.orderDraft.items
         .map((i) => ({ item: FOOD_MENU.find((m) => m.id === i.menuId)!, quantity: i.qty }))
         .filter((c) => c.item && c.quantity > 0);
-      const ticket = await quickOrderFood(cart, notes, "room");
+      const ticket = await quickOrderFood(cart, notes, destination, destination === "table" ? assignTableNumber() : undefined);
       if (ticket) updateChat(guestRoom, (m) => (m.id === messageId ? { ...m, orderDraft: { ...m.orderDraft!, confirmedTicketId: ticket.id }, ticket } : m));
       return ticket;
     },
-    [chatsByRoom, guestRoom, quickOrderFood, updateChat]
+    [chatsByRoom, guestRoom, quickOrderFood, updateChat, assignTableNumber]
   );
 
   /**
@@ -1233,7 +1236,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         let reply: ChatMessage;
 
         if (data.orderItems && data.orderItems.length > 0) {
-          reply = { id: `msg-${Date.now() + 1}`, sender: "ai", text: data.guestReply, timestamp: hhmm(clock()), orderDraft: { items: data.orderItems } };
+          reply = {
+            id: `msg-${Date.now() + 1}`,
+            sender: "ai",
+            text: data.guestReply,
+            timestamp: hhmm(clock()),
+            orderDraft: { items: data.orderItems, destination: DINE_IN_WORDS.test(text) ? "table" : "room" },
+          };
         } else if (data.isDirectAnswer) {
           reply = {
             id: `msg-${Date.now() + 1}`,

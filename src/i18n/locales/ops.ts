@@ -90,6 +90,21 @@ export const ops = {
   "op.do.upsell": e("Siapkan layanan yang dipesan; tagihan sudah masuk ke kamar.", "Prepare the booked service; it is already charged to the room.", "予約されたサービスを準備してください（お部屋付け済み）。", "예약된 서비스를 준비해 주세요 (객실 청구 완료).", "请准备已预订的服务（已计入房账）。", "Подготовьте заказанную услугу (уже в счёте номера).", "Préparer le service réservé (déjà facturé sur la chambre).", "Gebuchten Service vorbereiten (bereits aufs Zimmer gebucht)."),
   "op.do.unclassified": e("Baca pesan asli tamu dan tindak lanjuti.", "Read the guest's original message and follow up.", "ゲストの原文を読み、対応してください。", "고객 원문 메시지를 읽고 후속 조치해 주세요.", "请阅读客人原始消息并跟进。", "Прочитайте исходное сообщение гостя и примите меры.", "Lire le message original du client et donner suite.", "Originalnachricht des Gastes lesen und nachfassen."),
 
+  // ---------- Makan di restoran (dine-in) ----------
+  "g.step.served": e("Disajikan", "Served", "提供済み", "제공 완료", "已上菜", "Подано", "Servie", "Serviert"),
+  "g.food.atTable": e("Meja {table}", "Table {table}", "{table}番テーブル", "{table}번 테이블", "{table} 号桌", "Стол {table}", "Table {table}", "Tisch {table}"),
+  "g.food.placedBodyTable": e(
+    "Sudah kami kirim ke dapur. Silakan menuju restoran; pesanan Anda disajikan di Meja {table}. Tagihan masuk ke kamar {room}.",
+    "We've sent it to the kitchen. Please head to the restaurant; your order will be served at table {table}. It will be charged to room {room}.",
+    "キッチンに送りました。レストランへお越しください。{table}番テーブルにお出しします。料金は{room}号室付けとなります。",
+    "주방으로 전달했습니다. 레스토랑으로 와 주세요. {table}번 테이블로 서빙해 드립니다. 요금은 {room}호로 청구됩니다.",
+    "已发送至厨房。请前往餐厅，餐点将送到 {table} 号桌，费用计入 {room} 房。",
+    "Заказ передан на кухню. Проходите в ресторан, его подадут к столу {table}. Оплата будет включена в счёт номера {room}.",
+    "C'est transmis à la cuisine. Rendez-vous au restaurant : votre commande sera servie à la table {table}. Elle sera portée sur la chambre {room}.",
+    "Wir haben sie an die Küche geschickt. Bitte kommen Sie ins Restaurant; serviert wird an Tisch {table}. Sie wird auf Zimmer {room} gebucht."
+  ),
+  "tk.markServed": e("Tandai disajikan", "Mark served", "提供済みにする", "제공 완료로 표시", "标记已上菜", "Отметить как поданный", "Marquer comme servie", "Als serviert markieren"),
+
   // ---------- Pengaturan bahasa staf ----------
   "set.staffLanguage": e("Bahasa staf & laporan", "Staff & report language", "スタッフ・レポートの言語", "직원·보고서 언어", "员工与报告语言", "Язык персонала и отчётов", "Langue du personnel et des rapports", "Sprache für Personal & Berichte"),
   "set.staffLanguageHint": e(

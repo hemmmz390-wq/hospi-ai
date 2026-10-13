@@ -230,7 +230,7 @@ export interface ChatMessage {
    * Draf pesanan makanan yang dikenali AI dari chat. Belum menjadi pesanan
    * sampai tamu menekan konfirmasi — AI tidak boleh memesan atas nama tamu.
    */
-  orderDraft?: { items: { menuId: string; qty: number }[]; confirmedTicketId?: string };
+  orderDraft?: { items: { menuId: string; qty: number }[]; confirmedTicketId?: string; destination?: DiningDestination };
   /** Tamu menyebut makanan tanpa item tertentu: tampilkan tombol ke menu. */
   action?: "open_food_menu" | "open_explore";
   /** Pesan gagal diproses AI; tiket tetap dibuat ke Front Office. */
