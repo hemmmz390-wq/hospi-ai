@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ArrowLeft, ArrowUp, Headset, Bot, MessagesSquare, Mic } from "lucide-react";
+import { ArrowLeft, ArrowUp, Headset, Bot, MessagesSquare, Mic, Gift } from "lucide-react";
 import { useApp } from "../../../context/AppContext";
 import { useI18n, TranslationKey } from "../../../i18n";
 import { ChatMessage } from "../../../types";
@@ -50,6 +50,7 @@ export function ConversationsPage() {
     if (!m) return t("conv.noMessages");
     if (m.isEscalationNotice) return t("conv.systemNotice");
     if (m.orderDraft) return t("conv.orderDraft");
+    if (m.compensation) return t("conv.compensation", { item: t(m.compensation as TranslationKey) });
     return m.text || t("conv.aiUnavailable");
   };
 
@@ -163,7 +164,8 @@ export function ConversationsPage() {
                         {guest ? (m.isVoiceMessage ? <><Mic className="h-3 w-3" />{t("label.guest")}</> : t("label.guest")) : m.isHumanAgent ? m.agentName : "HOSPI AI"}
                         <span className="font-normal">· {m.timestamp}</span>
                       </p>
-                      <p className="whitespace-pre-wrap break-words">{m.aiUnavailable ? t("conv.aiUnavailable") : m.text}</p>
+                      {m.compensation && <p className="flex items-center gap-1.5 font-medium"><Gift className="h-3.5 w-3.5 shrink-0" />{t("conv.compensation", { item: t(m.compensation as TranslationKey) })}</p>}
+                      {(m.text || !m.compensation) && <p className="whitespace-pre-wrap break-words">{m.aiUnavailable ? t("conv.aiUnavailable") : m.text}</p>}
                       {m.ticket && <p className="mt-1.5 text-[0.6875rem] opacity-70">→ {m.ticket.id} · {m.ticket.dept}</p>}
                     </div>
                   </div>

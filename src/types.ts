@@ -223,6 +223,8 @@ export interface ChatMessage {
   offers?: UpsellOffer[];
   /** Pesan ini dikirim oleh staf manusia, bukan AI (Human Escalation) */
   isHumanAgent?: boolean;
+  /** Kompensasi dari Duty Manager (key kamus), ditampilkan dalam bahasa tamu. */
+  compensation?: string;
   agentName?: string;
   /** Pemberitahuan sistem bahwa percakapan dialihkan ke manusia */
   isEscalationNotice?: boolean;

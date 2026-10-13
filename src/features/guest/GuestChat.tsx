@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowUp, Mic, X, Headset, UtensilsCrossed, AlertCircle, Phone, MapPin } from "lucide-react";
+import { ArrowUp, Mic, X, Headset, UtensilsCrossed, AlertCircle, Phone, MapPin, Gift } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { ChatMessage, UpsellOffer } from "../../types";
@@ -135,6 +135,7 @@ function OfferCards({ message }: { message: ChatMessage }) {
 }
 
 function systemText(t: (k: TranslationKey, v?: Record<string, string | number>) => string, m: ChatMessage) {
+  if (m.text === "escalation.started.sentimen_komplain" || m.text === "escalation.started.darurat") return t("g.chat.connectingDM");
   if (m.text.startsWith("escalation.started.")) return t("g.chat.connecting");
   if (m.text === "escalation.claimed") return t("g.chat.claimed", { name: (m.agentName || "").split(" ")[0] });
   if (m.text === "escalation.resolved") return t("g.chat.resolved");
@@ -173,6 +174,15 @@ function Message({ m }: { m: ChatMessage }) {
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
           {t("g.chat.aiUnavailable")}
         </p>
+      ) : m.compensation ? (
+        <div className="rounded-lg border border-ok/30 bg-ok-soft p-3">
+          <p className="text-sm">{t("g.chat.compensation")}</p>
+          <p className="mt-1 flex items-center gap-2 text-[0.9375rem] font-semibold">
+            <Gift className="h-4 w-4 shrink-0 text-ok" />
+            {t(m.compensation as TranslationKey)}
+          </p>
+          {m.text && <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted">{m.text}</p>}
+        </div>
       ) : (
         <p className={cn("whitespace-pre-wrap break-words text-sm leading-relaxed", m.isEmergency && "font-medium text-crit")}>{m.text}</p>
       )}

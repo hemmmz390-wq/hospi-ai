@@ -169,7 +169,7 @@ export function TicketDrawer({ ticketId, onClose, onOpenTicket }: { ticketId: st
         break;
       case "compensate":
         if (!choice) return;
-        app.addTicketNote(ticket.id, `[Service recovery] ${t(choice as TranslationKey)}${text.trim() ? ` — ${text.trim()}` : ""}`, me);
+        app.offerCompensation(ticket.id, choice, text.trim(), me);
         break;
       case "decline":
         if (!text.trim()) return;

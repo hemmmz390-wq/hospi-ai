@@ -28,7 +28,7 @@ import { FOOD_MENU } from "../data/menu";
 import { LATE_CHECKOUT_OPTIONS, STANDARD_CHECKOUT, slaConfigFor } from "../data/sla";
 import { DEFAULT_STAFF_FOR_ROLE, STAFF } from "../data/staff";
 import { UPSELL_OFFERS, pickContextualOffers } from "../data/upsellOffers";
-import { useI18n, Locale } from "../i18n";
+import { useI18n, Locale, TranslationKey } from "../i18n";
 import { LOCALES } from "../i18n/types";
 import { aiService } from "../services/aiService";
 import { pmsService, posService, privacyService, systemService, SystemHealth, ticketSync } from "../services/integrationServices";
@@ -139,6 +139,7 @@ interface AppContextType {
   mergeDuplicateTickets: (primaryId: string, duplicateId: string) => void;
   updateRoomStatus: (roomNumber: string, status: HotelRoom["status"]) => void;
   addTicketNote: (ticketId: string, note: string, author: string) => void;
+  offerCompensation: (ticketId: string, compensationKey: string, note: string, author: string) => void;
   getBreachedCount: () => number;
   getApproachingSlaCount: () => number;
 
@@ -925,6 +926,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [patchTicket, showToast, t]
   );
 
+  /**
+   * Kompensasi dari Duty Manager: dicatat di tiket (untuk FO/DM) dan dikirim
+   * ke chat tamu, supaya tamu benar-benar tahu permintaan maaf hotel.
+   */
+  const offerCompensation = useCallback(
+    (ticketId: string, compensationKey: string, note: string, author: string) => {
+      const target = tickets.find((x) => x.id === ticketId);
+      if (!target) return;
+      const label = t(compensationKey as TranslationKey);
+      patchTicket(ticketId, (x) => ({ ...x, proof: { ...x.proof, note: x.proof?.note ? `${x.proof.note} | [Service recovery] ${label}` : `[Service recovery] ${label}` }, timeline: [...x.timeline, entry("dikerjakan", author, `[Service recovery] ${label}${note ? ` — ${note}` : ""}`)] }));
+      appendChat(target.room, { id: `msg-comp-${Date.now()}`, sender: "ai", text: note, timestamp: hhmm(clock()), isHumanAgent: true, agentName: author, compensation: compensationKey });
+      showToast(t("toast.compensationSent", { room: target.room }), "success");
+    },
+    [tickets, patchTicket, appendChat, showToast, t]
+  );
+
   const getBreachedCount = useCallback(() => {
     const now = Date.now();
     return tickets.filter((x) => !isTicketClosed(x.status) && x.status !== "DITUNDA" && now > new Date(x.sla.due_at).getTime()).length;
@@ -1489,6 +1506,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     mergeDuplicateTickets,
     updateRoomStatus,
     addTicketNote,
+    offerCompensation,
     getBreachedCount,
     getApproachingSlaCount,
     sendChatMessage,

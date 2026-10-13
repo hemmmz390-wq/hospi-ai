@@ -120,15 +120,20 @@ export function useServerSync(bindings: SyncBindings, onStatus: (s: SyncStatus) 
       const snap = new Map(map);
 
       if (c === "chats") {
+        // Versi chat yang sudah pernah diterima disaring DI LUAR updater. Updater
+        // dipanggil dua kali di StrictMode; bila chatRevs diubah di dalamnya,
+        // panggilan kedua mengira pesan sudah diterima lalu membuangnya.
+        const fresh = (incoming as (ChatEntity & { _rev?: number })[]).filter(
+          (e) => replace || e._rev === undefined || chatRevs.current.get(e.room) !== e._rev
+        );
+        for (const e of fresh) if (e._rev !== undefined) chatRevs.current.set(e.room, e._rev);
+        if (!replace && fresh.length === 0) continue;
         b.setChats((prev) => {
           const next: Record<string, ChatMessage[]> = replace ? {} : { ...prev };
           if (replace) map.clear();
-          for (const e of incoming as ChatEntity[] & { _rev?: number }[]) {
+          for (const e of fresh) {
             const localDirty = !replace && prev[e.room] && snap.get(e.room) !== prev[e.room];
             if (localDirty) continue;
-            const rev = (e as { _rev?: number })._rev;
-            if (!replace && rev !== undefined && chatRevs.current.get(e.room) === rev) continue;
-            if (rev !== undefined) chatRevs.current.set(e.room, rev);
             next[e.room] = e.messages || [];
             map.set(e.room, next[e.room]);
           }

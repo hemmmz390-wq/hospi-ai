@@ -105,6 +105,39 @@ export const ops = {
   ),
   "tk.markServed": e("Tandai disajikan", "Mark served", "提供済みにする", "제공 완료로 표시", "标记已上菜", "Отметить как поданный", "Marquer comme servie", "Als serviert markieren"),
 
+  // ---------- Kompensasi & eskalasi komplain ----------
+  "g.chat.compensation": e(
+    "Sebagai permintaan maaf, kami ingin memberikan:",
+    "As an apology, we would like to offer you:",
+    "お詫びのしるしとして、以下をご用意いたします：",
+    "사과의 뜻으로 다음을 제공해 드리고자 합니다:",
+    "为表歉意，我们为您提供：",
+    "В качестве извинения мы хотим предложить вам:",
+    "Pour nous excuser, nous souhaitons vous offrir :",
+    "Als Entschuldigung möchten wir Ihnen Folgendes anbieten:"
+  ),
+  "g.chat.connectingDM": e(
+    "Anda sedang dihubungkan dengan Duty Manager. Asisten akan diam sampai beliau membalas.",
+    "You're being connected with the Duty Manager. The assistant will stay quiet until they reply.",
+    "デューティーマネージャーにおつなぎしています。返信があるまでアシスタントは応答を控えます。",
+    "당직 매니저에게 연결하고 있습니다. 답변이 올 때까지 어시스턴트는 응답하지 않습니다.",
+    "正在为您转接值班经理。在其回复前，助手将暂停回复。",
+    "Соединяем вас с дежурным менеджером. Ассистент не будет отвечать, пока он не ответит.",
+    "Nous vous mettons en relation avec le Duty Manager. L'assistant restera silencieux jusqu'à sa réponse.",
+    "Wir verbinden Sie mit dem Duty Manager. Der Assistent schweigt, bis er antwortet."
+  ),
+  "toast.compensationSent": e(
+    "Kompensasi dikirim ke tamu kamar {room}",
+    "Compensation sent to the guest in room {room}",
+    "{room}号室のゲストに補償を送りました",
+    "{room}호 고객에게 보상을 전달했습니다",
+    "已向 {room} 房客人发送补偿",
+    "Компенсация отправлена гостю номера {room}",
+    "Compensation envoyée au client de la chambre {room}",
+    "Entschädigung an den Gast in Zimmer {room} gesendet"
+  ),
+  "conv.compensation": e("Kompensasi: {item}", "Compensation: {item}", "補償：{item}", "보상: {item}", "补偿：{item}", "Компенсация: {item}", "Compensation : {item}", "Entschädigung: {item}"),
+
   // ---------- Pengaturan bahasa staf ----------
   "set.staffLanguage": e("Bahasa staf & laporan", "Staff & report language", "スタッフ・レポートの言語", "직원·보고서 언어", "员工与报告语言", "Язык персонала и отчётов", "Langue du personnel et des rapports", "Sprache für Personal & Berichte"),
   "set.staffLanguageHint": e(
