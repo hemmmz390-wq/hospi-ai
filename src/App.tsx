@@ -14,6 +14,7 @@ import { GuestEntry } from "./features/entry/GuestEntry";
 import { DemoAccess } from "./features/entry/DemoAccess";
 import { NotFound } from "./features/entry/NotFound";
 import { EnterAs } from "./features/entry/EnterAs";
+import { isStandalone } from "./lib/staffPwa";
 
 // Tiga bagian besar dimuat terpisah: tamu yang memindai QR tidak perlu
 // mengunduh dashboard staf, dan sebaliknya.
@@ -28,6 +29,21 @@ function Home() {
   const room = new URLSearchParams(search).get("room");
   if (room) return <Navigate to={`/stay?room=${encodeURIComponent(room)}`} replace />;
   return <Landing />;
+}
+
+/**
+ * Aplikasi HOSPI Staff (ter-install) khusus staf: halaman tamu, landing,
+ * demo, dan presentasi tidak dibuka di dalamnya. Tanpa sesi staf, aplikasi
+ * langsung masuk sebagai Front Office.
+ */
+function StaffAppOnly({ children }: { children: React.ReactNode }) {
+  const { pathname, search } = useLocation();
+  const { hasCheckedIn, sessionKind } = useApp();
+  if (!isStandalone()) return <>{children}</>;
+  const staffSession = hasCheckedIn && sessionKind === "staff";
+  if (pathname.startsWith("/staff")) return staffSession ? <>{children}</> : <Navigate to="/enter?as=front_office" replace />;
+  if (pathname === "/enter" && new URLSearchParams(search).get("as") !== "guest") return <>{children}</>;
+  return <Navigate to={staffSession ? "/staff" : "/enter?as=front_office"} replace />;
 }
 
 function RequireGuest({ children }: { children: React.ReactNode }) {
@@ -55,6 +71,7 @@ export default function App() {
           <AppProvider>
             <BrowserRouter>
               <Suspense fallback={<PageFallback />}>
+                <StaffAppOnly>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/stay" element={<GuestEntry />} />
@@ -79,6 +96,7 @@ export default function App() {
                   />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
+                </StaffAppOnly>
               </Suspense>
               <Toaster />
             </BrowserRouter>

@@ -8,6 +8,7 @@ import { cn } from "../../lib/cn";
 import { Overlay } from "../ui";
 import { DemoInfo } from "./Shared";
 import { isEmbedded } from "../../features/entry/EnterAs";
+import { isStandalone } from "../../lib/staffPwa";
 
 const STAFF: { role: Exclude<Role, "tourist">; icon: React.ComponentType<{ className?: string }>; desc: TranslationKey }[] = [
   { role: "front_office", icon: Layers, desc: "demo.role.fo" },
@@ -31,6 +32,8 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
 
   // Di dalam mode presentasi, perpindahan dilakukan dari bar presentasi.
   if (isEmbedded()) return null;
+  // Aplikasi HOSPI Staff yang ter-install: hanya peran staf, tanpa tampilan tamu.
+  const staffOnly = isStandalone();
 
   const go = (path: string) => {
     setOpen(false);
@@ -43,14 +46,15 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
         type="button"
         onClick={() => setOpen(true)}
         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-warn/40 bg-warn-soft px-2.5 text-[0.8125rem] font-semibold text-warn hover:brightness-95"
-        aria-label={t("sw.button")}
+        aria-label={t(staffOnly ? "sw.roleButton" : "sw.button")}
       >
         <ArrowLeftRight className="h-4 w-4" />
-        <span className={cn(compact && "hidden min-[420px]:inline")}>{t("sw.button")}</span>
+        <span className={cn(compact && "hidden min-[420px]:inline")}>{t(staffOnly ? "sw.roleButton" : "sw.button")}</span>
       </button>
 
-      <Overlay open={open} onClose={() => setOpen(false)} title={t("sw.title")} description={t("sw.subtitle")} size="lg">
+      <Overlay open={open} onClose={() => setOpen(false)} title={t(staffOnly ? "sw.roleTitle" : "sw.title")} description={t(staffOnly ? "sw.roleSubtitle" : "sw.subtitle")} size="lg">
         <div className="space-y-6">
+          {!staffOnly && (
           <section>
             <h3 className="mb-2 flex items-center gap-2 text-[0.8125rem] font-semibold">
               <Smartphone className="h-4 w-4 text-muted" />
@@ -80,6 +84,7 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
               })}
             </div>
           </section>
+          )}
 
           <section>
             <h3 className="mb-2 flex items-center gap-2 text-[0.8125rem] font-semibold">
@@ -113,6 +118,8 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
             </div>
           </section>
 
+          {!staffOnly && (
+          <>
           <button
             type="button"
             onClick={() => go("/present")}
@@ -131,6 +138,8 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
               <DemoInfo />
             </div>
           </details>
+          </>
+          )}
         </div>
       </Overlay>
     </>

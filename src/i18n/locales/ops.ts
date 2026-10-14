@@ -215,6 +215,20 @@ export const ops = {
   "push.testTitle": e("HOSPI · Notifikasi uji", "HOSPI · Test notification", "HOSPI・テスト通知", "HOSPI · 테스트 알림", "HOSPI · 测试通知", "HOSPI · Тестовое уведомление", "HOSPI · Notification test", "HOSPI · Testbenachrichtigung"),
   "push.testBody": e("Notifikasi di perangkat ini sudah berfungsi.", "Notifications are working on this device.", "この端末で通知が正常に動作しています。", "이 기기에서 알림이 정상 작동합니다.", "此设备的通知已正常工作。", "Уведомления на этом устройстве работают.", "Les notifications fonctionnent sur cet appareil.", "Benachrichtigungen funktionieren auf diesem Gerät."),
 
+  // ---------- Ganti peran di aplikasi HOSPI Staff ----------
+  "sw.roleButton": e("Ganti peran", "Switch role", "役割を切り替え", "역할 전환", "切换角色", "Сменить роль", "Changer de rôle", "Rolle wechseln"),
+  "sw.roleTitle": e("Masuk sebagai bagian apa?", "Which team are you on?", "どの部門で使いますか？", "어느 부서로 사용하시나요?", "您属于哪个部门？", "В каком вы отделе?", "Dans quelle équipe êtes-vous ?", "In welchem Team sind Sie?"),
+  "sw.roleSubtitle": e(
+    "Aplikasi ini khusus staf hotel. Notifikasi di perangkat ini ikut pindah ke peran yang dipilih.",
+    "This app is for hotel staff only. Notifications on this device follow the role you choose.",
+    "このアプリはホテルスタッフ専用です。この端末の通知は選んだ役割に切り替わります。",
+    "이 앱은 호텔 직원 전용입니다. 이 기기의 알림은 선택한 역할을 따릅니다.",
+    "此应用仅供酒店员工使用。此设备的通知会跟随所选角色。",
+    "Приложение только для персонала отеля. Уведомления на этом устройстве переключатся на выбранную роль.",
+    "Cette application est réservée au personnel. Les notifications de cet appareil suivent le rôle choisi.",
+    "Diese App ist nur für Hotelpersonal. Benachrichtigungen auf diesem Gerät folgen der gewählten Rolle."
+  ),
+
   // ---------- Pengaturan bahasa staf ----------
   "set.staffLanguage": e("Bahasa staf & laporan", "Staff & report language", "スタッフ・レポートの言語", "직원·보고서 언어", "员工与报告语言", "Язык персонала и отчётов", "Langue du personnel et des rapports", "Sprache für Personal & Berichte"),
   "set.staffLanguageHint": e(
