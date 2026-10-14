@@ -92,6 +92,16 @@ export const guests = {
     "Votre commande {order} est prête et servie à la table {table}. Bon appétit !",
     "Ihre Bestellung {order} ist fertig und wird an Tisch {table} serviert. Guten Appetit!"
   ),
+  "g.notice.order_on_the_way": e(
+    "Pesanan {order} Anda sudah siap dan sedang diantar ke kamar {room}. Sebentar lagi sampai!",
+    "Your order {order} is ready and on its way to room {room}. It'll be with you shortly!",
+    "ご注文 {order} の準備ができ、{room}号室へお届け中です。まもなくお届けします！",
+    "주문하신 {order}이(가) 준비되어 {room}호로 배달 중입니다. 곧 도착합니다!",
+    "您的订单 {order} 已备好，正在送往 {room} 房，马上就到！",
+    "Ваш заказ {order} готов и уже едет в номер {room}. Скоро будет у вас!",
+    "Votre commande {order} est prête et en route vers la chambre {room}. Elle arrive bientôt !",
+    "Ihre Bestellung {order} ist fertig und auf dem Weg zu Zimmer {room}. Gleich ist sie da!"
+  ),
   "g.notice.cleaning_done": e(
     "Kamar Anda sudah selesai dibersihkan. Selamat beristirahat!",
     "Your room has been cleaned. Enjoy your stay!",

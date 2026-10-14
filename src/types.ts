@@ -272,7 +272,7 @@ export interface HotelRoom {
 }
 
 /** Jenis kabar "pekerjaan selesai" yang dikirim AI ke tamu. */
-export type GuestNoticeKind = "order_ready_table" | "cleaning_done" | "ac_fixed" | "repair_done";
+export type GuestNoticeKind = "order_ready_table" | "order_on_the_way" | "cleaning_done" | "ac_fixed" | "repair_done";
 export type GuestNotice = { kind: GuestNoticeKind; vars?: Record<string, string | number> };
 
 export interface AppNotification {

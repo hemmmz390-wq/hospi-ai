@@ -1194,6 +1194,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       if (target) notify({ title: "Order ready", message: `${target.order?.id || target.id} · ${target.room}`, priority: "MEDIUM", targetRole: target.diningDestination === "table" ? "food_beverage" : "housekeeping", ticketId, roomNumber: target.room, type: "order_ready" });
       if (target?.diningDestination === "table") notifyGuestDone(target, { kind: "order_ready_table", vars: { order: target.order?.id || target.id, table: target.tableNumber || "—" } });
+      // Pesanan ke kamar: siap di dapur berarti sedang diantar.
+      else if (target) notifyGuestDone(target, { kind: "order_on_the_way", vars: { order: target.order?.id || target.id, room: target.room } });
       showToast(t("toast.orderReady", { id: target?.order?.id || ticketId }), "success");
     },
     [tickets, patchTicket, notify, showToast, t, notifyGuestDone]
