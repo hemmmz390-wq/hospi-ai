@@ -138,6 +138,83 @@ export const ops = {
   ),
   "conv.compensation": e("Kompensasi: {item}", "Compensation: {item}", "補償：{item}", "보상: {item}", "补偿：{item}", "Компенсация: {item}", "Compensation : {item}", "Entschädigung: {item}"),
 
+  // ---------- Aplikasi HOSPI Staff & notifikasi push ----------
+  "pwa.title": e("Aplikasi HOSPI Staff", "HOSPI Staff app", "HOSPI Staff アプリ", "HOSPI Staff 앱", "HOSPI Staff 应用", "Приложение HOSPI Staff", "Application HOSPI Staff", "HOSPI-Staff-App"),
+  "pwa.hint": e(
+    "Pasang di HP, tablet, atau komputer kerja supaya terbuka seperti aplikasi dan bisa menerima notifikasi.",
+    "Install it on a work phone, tablet or computer so it opens like an app and can receive notifications.",
+    "業務用のスマホ・タブレット・PCにインストールすると、アプリとして開き通知を受け取れます。",
+    "업무용 휴대폰, 태블릿, 컴퓨터에 설치하면 앱처럼 열리고 알림을 받을 수 있습니다.",
+    "安装到工作手机、平板或电脑上，即可像应用一样打开并接收通知。",
+    "Установите на рабочий телефон, планшет или компьютер — приложение будет открываться отдельно и получать уведомления.",
+    "Installez-la sur un téléphone, une tablette ou un ordinateur de travail pour l'ouvrir comme une application et recevoir des notifications.",
+    "Auf einem Arbeitshandy, Tablet oder Computer installieren, damit sie wie eine App öffnet und Benachrichtigungen empfängt."
+  ),
+  "pwa.install": e("Pasang aplikasi", "Install app", "アプリをインストール", "앱 설치", "安装应用", "Установить приложение", "Installer l'application", "App installieren"),
+  "pwa.installed": e("Sudah terpasang di perangkat ini", "Installed on this device", "この端末にインストール済み", "이 기기에 설치됨", "已安装在此设备上", "Установлено на этом устройстве", "Installée sur cet appareil", "Auf diesem Gerät installiert"),
+  "pwa.ios": e(
+    "Di iPhone/iPad: buka di Safari, ketuk tombol Bagikan, lalu pilih \"Tambah ke Layar Utama\".",
+    "On iPhone/iPad: open in Safari, tap Share, then choose \"Add to Home Screen\".",
+    "iPhone/iPadの場合：Safariで開き、共有ボタンから「ホーム画面に追加」を選びます。",
+    "iPhone/iPad: Safari에서 열고 공유 버튼을 누른 뒤 \"홈 화면에 추가\"를 선택하세요.",
+    "iPhone/iPad：在 Safari 中打开，点击“分享”，然后选择“添加到主屏幕”。",
+    "На iPhone/iPad: откройте в Safari, нажмите «Поделиться» и выберите «На экран „Домой“».",
+    "Sur iPhone/iPad : ouvrez dans Safari, touchez Partager, puis « Sur l'écran d'accueil ».",
+    "Auf iPhone/iPad: in Safari öffnen, auf Teilen tippen und „Zum Home-Bildschirm“ wählen."
+  ),
+  "pwa.manual": e(
+    "Buka menu browser, lalu pilih \"Install aplikasi\" atau \"Tambahkan ke layar utama\".",
+    "Open the browser menu and choose \"Install app\" or \"Add to Home screen\".",
+    "ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選びます。",
+    "브라우저 메뉴에서 \"앱 설치\" 또는 \"홈 화면에 추가\"를 선택하세요.",
+    "打开浏览器菜单，选择“安装应用”或“添加到主屏幕”。",
+    "Откройте меню браузера и выберите «Установить приложение» или «Добавить на главный экран».",
+    "Ouvrez le menu du navigateur et choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil ».",
+    "Im Browsermenü „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen."
+  ),
+  "pwa.cta": e("Pasang aplikasi & aktifkan notifikasi", "Install the app & turn on notifications", "アプリをインストールして通知をオン", "앱 설치 및 알림 켜기", "安装应用并开启通知", "Установить приложение и включить уведомления", "Installer l'app et activer les notifications", "App installieren & Benachrichtigungen aktivieren"),
+  "push.title": e("Notifikasi di perangkat ini", "Notifications on this device", "この端末の通知", "이 기기의 알림", "此设备的通知", "Уведомления на этом устройстве", "Notifications sur cet appareil", "Benachrichtigungen auf diesem Gerät"),
+  "push.hint": e(
+    "Perangkat berbunyi saat ada tugas baru untuk {role}, keadaan darurat, atau tiket yang lewat batas waktu, walau aplikasi sedang ditutup.",
+    "The device alerts you about new tasks for {role}, emergencies and overdue tickets, even when the app is closed.",
+    "アプリを閉じていても、{role}の新しいタスク、緊急事態、期限超過のチケットを通知します。",
+    "앱을 닫아도 {role}의 새 작업, 긴급 상황, 기한 초과 티켓을 알려 드립니다.",
+    "即使应用已关闭，也会提醒 {role} 的新任务、紧急情况和超时工单。",
+    "Устройство сообщит о новых задачах для {role}, ЧП и просроченных заявках, даже если приложение закрыто.",
+    "L'appareil vous alerte des nouvelles tâches pour {role}, des urgences et des tickets en retard, même application fermée.",
+    "Das Gerät meldet neue Aufgaben für {role}, Notfälle und überfällige Tickets, auch wenn die App geschlossen ist."
+  ),
+  "push.enable": e("Aktifkan notifikasi", "Turn on notifications", "通知をオンにする", "알림 켜기", "开启通知", "Включить уведомления", "Activer les notifications", "Benachrichtigungen aktivieren"),
+  "push.disable": e("Matikan", "Turn off", "オフにする", "끄기", "关闭", "Выключить", "Désactiver", "Ausschalten"),
+  "push.test": e("Kirim notifikasi uji", "Send a test notification", "テスト通知を送信", "테스트 알림 보내기", "发送测试通知", "Отправить тестовое уведомление", "Envoyer une notification test", "Testbenachrichtigung senden"),
+  "push.testSent": e("Notifikasi uji dikirim", "Test notification sent", "テスト通知を送信しました", "테스트 알림을 보냈습니다", "测试通知已发送", "Тестовое уведомление отправлено", "Notification test envoyée", "Testbenachrichtigung gesendet"),
+  "push.testFailed": e("Notifikasi uji gagal dikirim", "Couldn't send the test notification", "テスト通知を送信できませんでした", "테스트 알림을 보내지 못했습니다", "测试通知发送失败", "Не удалось отправить тестовое уведомление", "Échec de l'envoi de la notification test", "Testbenachrichtigung konnte nicht gesendet werden"),
+  "push.on": e("Aktif untuk {role}", "On for {role}", "{role}向けにオン", "{role}용으로 켜짐", "已为 {role} 开启", "Включено для {role}", "Activées pour {role}", "Aktiv für {role}"),
+  "push.off": e("Belum aktif", "Off", "オフ", "꺼짐", "未开启", "Выключено", "Désactivées", "Aus"),
+  "push.denied": e(
+    "Notifikasi diblokir di browser. Izinkan lewat pengaturan situs, lalu coba lagi.",
+    "Notifications are blocked in the browser. Allow them in the site settings, then try again.",
+    "ブラウザで通知がブロックされています。サイトの設定で許可してから再度お試しください。",
+    "브라우저에서 알림이 차단되어 있습니다. 사이트 설정에서 허용한 뒤 다시 시도하세요.",
+    "浏览器已阻止通知。请在网站设置中允许后重试。",
+    "Уведомления заблокированы в браузере. Разрешите их в настройках сайта и попробуйте снова.",
+    "Les notifications sont bloquées dans le navigateur. Autorisez-les dans les paramètres du site, puis réessayez.",
+    "Benachrichtigungen sind im Browser blockiert. In den Website-Einstellungen erlauben und erneut versuchen."
+  ),
+  "push.unsupported": e(
+    "Browser ini belum mendukung notifikasi push. Di iPhone, pasang aplikasinya ke layar utama dulu.",
+    "This browser doesn't support push notifications. On iPhone, add the app to the Home Screen first.",
+    "このブラウザはプッシュ通知に対応していません。iPhoneでは先にホーム画面に追加してください。",
+    "이 브라우저는 푸시 알림을 지원하지 않습니다. iPhone에서는 먼저 홈 화면에 앱을 추가하세요.",
+    "此浏览器不支持推送通知。在 iPhone 上，请先将应用添加到主屏幕。",
+    "Этот браузер не поддерживает push-уведомления. На iPhone сначала добавьте приложение на экран «Домой».",
+    "Ce navigateur ne prend pas en charge les notifications push. Sur iPhone, ajoutez d'abord l'app à l'écran d'accueil.",
+    "Dieser Browser unterstützt keine Push-Benachrichtigungen. Auf dem iPhone die App zuerst zum Home-Bildschirm hinzufügen."
+  ),
+  "push.serverOff": e("Notifikasi push belum diaktifkan di server.", "Push notifications aren't enabled on the server yet.", "サーバーでプッシュ通知がまだ有効になっていません。", "서버에서 푸시 알림이 아직 활성화되지 않았습니다.", "服务器尚未启用推送通知。", "Push-уведомления ещё не включены на сервере.", "Les notifications push ne sont pas encore activées sur le serveur.", "Push-Benachrichtigungen sind auf dem Server noch nicht aktiviert."),
+  "push.testTitle": e("HOSPI · Notifikasi uji", "HOSPI · Test notification", "HOSPI・テスト通知", "HOSPI · 테스트 알림", "HOSPI · 测试通知", "HOSPI · Тестовое уведомление", "HOSPI · Notification test", "HOSPI · Testbenachrichtigung"),
+  "push.testBody": e("Notifikasi di perangkat ini sudah berfungsi.", "Notifications are working on this device.", "この端末で通知が正常に動作しています。", "이 기기에서 알림이 정상 작동합니다.", "此设备的通知已正常工作。", "Уведомления на этом устройстве работают.", "Les notifications fonctionnent sur cet appareil.", "Benachrichtigungen funktionieren auf diesem Gerät."),
+
   // ---------- Pengaturan bahasa staf ----------
   "set.staffLanguage": e("Bahasa staf & laporan", "Staff & report language", "スタッフ・レポートの言語", "직원·보고서 언어", "员工与报告语言", "Язык персонала и отчётов", "Langue du personnel et des rapports", "Sprache für Personal & Berichte"),
   "set.staffLanguageHint": e(

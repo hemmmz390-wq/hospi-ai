@@ -29,6 +29,7 @@ import { GlobalSearch } from "./GlobalSearch";
 import { TicketDrawer } from "./TicketDrawer";
 import { RoomDrawer } from "./RoomDrawer";
 import { useDetailParams } from "./staffUtils";
+import { setupStaffApp } from "../../lib/staffPwa";
 import { Overview } from "./pages/Overview";
 import { TicketsPage } from "./pages/TicketsPage";
 import { RoomsPage } from "./pages/RoomsPage";
@@ -196,6 +197,8 @@ const TITLES: Record<string, TranslationKey> = {
 export default function StaffApp() {
   // Satu bahasa untuk semua staf, diatur di Front Office (Pengaturan → Bahasa).
   useLocaleScope(STAFF_LOCALE_KEY, STAFF_DEFAULT_LOCALE);
+  // Aplikasi staf bisa di-install (HOSPI Staff) dan menerima notifikasi push.
+  useEffect(() => setupStaffApp(), []);
   const { role } = useApp();
   const { t } = useI18n();
   const { pathname } = useLocation();

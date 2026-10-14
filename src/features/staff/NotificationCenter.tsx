@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { Bell, AlertTriangle, Siren, Star, Utensils, PauseCircle, Inbox, CircleDot } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, AlertTriangle, Siren, Star, Utensils, PauseCircle, Inbox, CircleDot, Smartphone } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { AppNotification } from "../../types";
@@ -44,6 +45,7 @@ export function useRoleNotifications() {
 export function NotificationCenter({ onOpenTicket }: { onOpenTicket: (id: string) => void }) {
   const { markNotificationsRead } = useApp();
   const { t, locale } = useI18n();
+  const navigate = useNavigate();
   const list = useRoleNotifications();
   const unread = list.filter((n) => !n.read);
 
@@ -105,6 +107,17 @@ export function NotificationCenter({ onOpenTicket }: { onOpenTicket: (id: string
               })}
             </ul>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              close();
+              navigate("/staff/settings");
+            }}
+            className="flex w-full items-center gap-2 border-t border-line px-4 py-3 text-left text-[0.8125rem] font-medium text-muted hover:bg-sunken/60 hover:text-fg"
+          >
+            <Smartphone className="h-4 w-4 shrink-0" />
+            {t("pwa.cta")}
+          </button>
         </div>
       )}
     </Popover>

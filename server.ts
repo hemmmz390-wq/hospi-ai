@@ -4,7 +4,8 @@ import fs from "fs";
 import dotenv from "dotenv";
 import { aiService, normalizeLocale } from "./server/ai";
 import { transcribeAudio } from "./server/ai/transcription";
-import { handleSync, syncStore, syncInstance, syncStoreKind } from "./server/sync";
+import { handleSync, syncStore, syncInstance, syncStoreKind, onNewNotifications } from "./server/sync";
+import { pushEnabled, pushPublicKey, pushNotifications, pushTest, subscribe as pushSubscribe, unsubscribe as pushUnsubscribe } from "./server/push";
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ app.get("/api/health", (_req, res) => {
     hasApiKey: Boolean(process.env.GEMINI_API_KEY),
     // Dibaca halaman Settings → AI configuration dan indikator Demo mode.
     aiProvider: aiService.provider(),
-    integrations: { pms: "simulation", pos: "simulation", notifications: "in_app", voice: "browser_speech_api" },
+    integrations: { pms: "simulation", pos: "simulation", notifications: pushEnabled() ? "in_app+push" : "in_app", voice: "browser_speech_api" },
     syncInstance: syncInstance(),
     // "redis" = semua perangkat berbagi satu database; "memory" = cadangan.
     syncStore: syncStoreKind(),
@@ -31,6 +32,35 @@ app.get("/api/health", (_req, res) => {
 // ============================================================
 // Sync hub: satu salinan data untuk semua perangkat (lihat server/sync.ts)
 // ============================================================
+
+// ============================================================
+// Notifikasi push ke perangkat staf
+// ============================================================
+onNewNotifications((list) => pushNotifications(list as any));
+
+app.get("/api/push/key", (_req, res) => {
+  res.json({ enabled: pushEnabled(), publicKey: pushPublicKey() });
+});
+
+app.post("/api/push/subscribe", async (req, res) => {
+  if (!pushEnabled()) return res.status(503).json({ error: "push_disabled" });
+  try {
+    const { subscription, role, locale } = req.body || {};
+    const r = await pushSubscribe(subscription, role, locale);
+    res.json({ ok: true, role: r.role, locale: r.locale });
+  } catch {
+    res.status(400).json({ error: "invalid_subscription" });
+  }
+});
+
+app.post("/api/push/unsubscribe", async (req, res) => {
+  await pushUnsubscribe(req.body?.endpoint);
+  res.json({ ok: true });
+});
+
+app.post("/api/push/test", async (req, res) => {
+  res.json({ ok: await pushTest(req.body?.endpoint) });
+});
 
 app.post("/api/sync", async (req, res) => {
   try {

@@ -12,6 +12,7 @@ import { Badge, Button, Card, Select } from "../../../components/ui";
 import { ThemeSwitch, LanguageMenu, TextSizeSwitch } from "../../../components/common/Shared";
 import { deptKey } from "../../guest/components";
 import { relativeTime } from "../NotificationCenter";
+import { StaffAppCard } from "../StaffAppCard";
 
 const SECTIONS: { id: string; label: TranslationKey }[] = [
   { id: "hotel", label: "set.hotel" },
@@ -95,6 +96,10 @@ export function SettingsPage() {
       </nav>
 
       <div className="min-w-0 space-y-6">
+        <Section id="app" title={t("pwa.title")} hint={t("pwa.hint")}>
+          <StaffAppCard />
+        </Section>
+
         <Section id="hotel" title={t("set.hotel")} hint={t("set.hotelHint")}>
           <KV
             rows={[

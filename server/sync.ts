@@ -220,16 +220,31 @@ function mergeChat(existing: Entity | undefined, incoming: Entity): Entity {
   return { room: incoming.room, messages };
 }
 
-async function applyChanges(b: Backend, changes: Changes | undefined, now: number) {
-  if (!changes) return;
+/**
+ * Dipanggil dengan notifikasi yang baru pertama kali tiba di server, untuk
+ * dikirim sebagai notifikasi push ke perangkat staf (server/push.ts).
+ */
+type NotificationHook = (list: Entity[]) => Promise<void>;
+let notificationHook: NotificationHook | null = null;
+export function onNewNotifications(fn: NotificationHook) {
+  notificationHook = fn;
+}
+
+async function applyChanges(b: Backend, changes: Changes | undefined, now: number): Promise<Entity[]> {
+  if (!changes) return [];
   const writes: Write[] = [];
+  const fresh: Entity[] = [];
   for (const c of COLLECTIONS) {
     const list = (changes[c] || []).filter((e) => e && KEY[c](e));
     if (list.length === 0) continue;
-    const existing = c === "chats" ? await b.get(c, list.map((e) => KEY[c](e))) : null;
-    for (const e of list) writes.push({ c, e: c === "chats" ? mergeChat(existing!.get(KEY[c](e)), e) : e, ts: now });
+    const existing = c === "chats" || c === "notifications" ? await b.get(c, list.map((e) => KEY[c](e))) : null;
+    for (const e of list) {
+      if (c === "notifications" && !existing!.has(KEY[c](e))) fresh.push(e);
+      writes.push({ c, e: c === "chats" ? mergeChat(existing!.get(KEY[c](e)), e) : e, ts: now });
+    }
   }
   await b.write(writes);
+  return fresh;
 }
 
 /**
@@ -238,8 +253,9 @@ async function applyChanges(b: Backend, changes: Changes | undefined, now: numbe
  * atau yang salinan servernya lebih tua — perangkat yang lama tidak aktif
  * tidak boleh menimpa perubahan terbaru.
  */
-async function applyFull(b: Backend, full: Changes, dirty: SyncRequest["dirty"], now: number) {
+async function applyFull(b: Backend, full: Changes, dirty: SyncRequest["dirty"], now: number): Promise<Entity[]> {
   const writes: Write[] = [];
+  const fresh: Entity[] = [];
   for (const c of COLLECTIONS) {
     const list = (full[c] || []).filter((e) => e && KEY[c](e));
     if (list.length === 0) continue;
@@ -249,6 +265,7 @@ async function applyFull(b: Backend, full: Changes, dirty: SyncRequest["dirty"],
       const id = KEY[c](e);
       const old = existing.get(id);
       const merged = c === "chats" ? mergeChat(old, e) : e;
+      if (c === "notifications" && !old && dirtyIds.has(id)) fresh.push(e);
       if (dirtyIds.has(id)) writes.push({ c, e: merged, ts: now });
       else if (!old) writes.push({ c, e: merged, ts: e._ts || 0 });
       else if ((e._ts || 0) > (old._ts || 0)) writes.push({ c, e: merged, ts: e._ts || 0 });
@@ -256,6 +273,16 @@ async function applyFull(b: Backend, full: Changes, dirty: SyncRequest["dirty"],
     }
   }
   await b.write(writes);
+  return fresh;
+}
+
+async function announce(list: Entity[]) {
+  if (!notificationHook || list.length === 0) return;
+  try {
+    await notificationHook(list);
+  } catch (err) {
+    console.warn("[sync] notifikasi push gagal:", (err as Error)?.message);
+  }
 }
 
 /** Data perangkat menang hanya bila server kosong, atau perangkat baru saja reset. */
@@ -283,7 +310,7 @@ export async function handleSync(input: SyncRequest): Promise<SyncResponse> {
       await b.reset({ id: req.epoch!, provisional: req.provisional });
       await applyFull(b, req.full, undefined, now);
     } else if (server && req.epoch === server.id) {
-      await applyFull(b, req.full, req.dirty, now);
+      await announce(await applyFull(b, req.full, req.dirty, now));
     } else {
       return { ...base, mode: "replace", epoch: server!.id, ...(await b.all()) };
     }
@@ -299,7 +326,7 @@ export async function handleSync(input: SyncRequest): Promise<SyncResponse> {
     return { ...base, mode: "replace", epoch: server.id, ...(await b.all()) };
   }
 
-  await applyChanges(b, req.changes, now);
+  await announce(await applyChanges(b, req.changes, now));
   return { ...base, mode: "delta", epoch: server.id, ...(await b.changedSince(req.since)) };
 }
 

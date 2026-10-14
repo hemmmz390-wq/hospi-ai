@@ -1,0 +1,161 @@
+import webpush from "web-push";
+import { redisFromEnv, RedisLike } from "./redis";
+import { dictionary, TranslationKey } from "../src/i18n/dictionary";
+import { LOCALES, Locale } from "../src/i18n/types";
+
+/**
+ * Notifikasi push ke HP/tablet staf (Web Push + VAPID).
+ *
+ * Aktif bila VAPID_PUBLIC_KEY dan VAPID_PRIVATE_KEY terpasang. Langganan
+ * disimpan per perangkat bersama peran staf dan bahasanya, di Redis bila ada
+ * (andal di Vercel), atau di memori server.
+ *
+ * Pemicunya notifikasi aplikasi (tiket baru, darurat, SLA lewat, rating
+ * buruk, pesanan siap, tamu minta staf) yang tiba di server lewat sinkronisasi.
+ */
+
+type Role = "front_office" | "housekeeping" | "maintenance" | "duty_manager" | "food_beverage";
+type Subscription = { endpoint: string; keys: { p256dh: string; auth: string } };
+type Record_ = { sub: Subscription; role: Role; locale: Locale; at: number };
+type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  targetRole: string;
+  read?: boolean;
+  ticketId?: string;
+  type?: string;
+};
+
+const ROLES: Role[] = ["front_office", "housekeeping", "maintenance", "duty_manager", "food_beverage"];
+const HASH = "hospi:push";
+/** Hanya notifikasi yang baru terjadi yang dikirim; data contoh dan data lama tidak. */
+const FRESH_MS = 2 * 60 * 1000;
+
+const TITLE: Record<string, TranslationKey> = {
+  sla_breach: "notif.slaBreach",
+  emergency: "notif.emergency",
+  rating: "notif.lowRating",
+  reopened: "notif.lowRating",
+  order_ready: "notif.orderReady",
+  defer: "notif.onHold",
+  new_ticket: "notif.newRequest",
+};
+
+let configured: boolean | null = null;
+export function pushEnabled(): boolean {
+  if (configured !== null) return configured;
+  const pub = process.env.VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) return (configured = false);
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || "https://hospi-ai.vercel.app", pub, priv);
+  return (configured = true);
+}
+
+export const pushPublicKey = () => (pushEnabled() ? process.env.VAPID_PUBLIC_KEY! : null);
+
+// ---------------- Penyimpanan langganan ----------------
+const memory = new Map<string, Record_>();
+let redis: RedisLike | null | undefined;
+const getRedis = () => (redis === undefined ? (redis = redisFromEnv()) : redis);
+
+async function saveRecord(r: Record_) {
+  const db = getRedis();
+  if (db) await db.command(["HSET", HASH, r.sub.endpoint, JSON.stringify(r)]);
+  else memory.set(r.sub.endpoint, r);
+}
+
+async function removeRecord(endpoint: string) {
+  const db = getRedis();
+  if (db) await db.command(["HDEL", HASH, endpoint]);
+  else memory.delete(endpoint);
+}
+
+async function allRecords(): Promise<Record_[]> {
+  const db = getRedis();
+  if (!db) return [...memory.values()];
+  const flat = (await db.command<string[]>(["HGETALL", HASH])) || [];
+  const out: Record_[] = [];
+  for (let i = 1; i < flat.length; i += 2) {
+    try {
+      out.push(JSON.parse(flat[i]));
+    } catch {
+      /* abaikan data rusak */
+    }
+  }
+  return out;
+}
+
+// ---------------- API ----------------
+function validSub(sub: any): sub is Subscription {
+  return Boolean(sub && typeof sub.endpoint === "string" && sub.endpoint.startsWith("https://") && sub.keys?.p256dh && sub.keys?.auth);
+}
+
+export async function subscribe(sub: unknown, role: unknown, locale: unknown) {
+  if (!validSub(sub)) throw new Error("invalid_subscription");
+  const r: Record_ = {
+    sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } },
+    role: ROLES.includes(role as Role) ? (role as Role) : "front_office",
+    locale: (LOCALES as readonly string[]).includes(locale as string) ? (locale as Locale) : "id",
+    at: Date.now(),
+  };
+  await saveRecord(r);
+  return r;
+}
+
+export async function unsubscribe(endpoint: unknown) {
+  if (typeof endpoint === "string") await removeRecord(endpoint);
+}
+
+function payloadFor(n: Notification, locale: Locale) {
+  const key = n.type ? TITLE[n.type] : undefined;
+  const title = key && dictionary[key] ? dictionary[key][locale] || dictionary[key].id : n.title;
+  return JSON.stringify({
+    title: `HOSPI · ${title}`,
+    body: n.message,
+    tag: n.ticketId || n.id,
+    url: n.ticketId ? `/staff?ticket=${encodeURIComponent(n.ticketId)}` : "/staff",
+    urgent: n.type === "emergency" || n.type === "sla_breach",
+  });
+}
+
+async function send(r: Record_, payload: string, urgent: boolean) {
+  try {
+    await webpush.sendNotification(r.sub, payload, { TTL: 600, urgency: urgent ? "high" : "normal", timeout: 5000 });
+    return true;
+  } catch (err: any) {
+    // Perangkat sudah mencabut izin atau langganan kedaluwarsa: hapus.
+    if (err?.statusCode === 404 || err?.statusCode === 410) await removeRecord(r.sub.endpoint);
+    else console.warn("[push] gagal mengirim:", err?.statusCode || err?.message);
+    return false;
+  }
+}
+
+/** Kirim notifikasi baru ke perangkat staf yang perannya dituju. */
+export async function pushNotifications(list: Notification[]) {
+  if (!pushEnabled() || list.length === 0) return;
+  const now = Date.now();
+  const fresh = list.filter((n) => !n.read && !n.id.startsWith("seed-") && now - new Date(n.timestamp).getTime() < FRESH_MS);
+  if (fresh.length === 0) return;
+  const records = await allRecords();
+  if (records.length === 0) return;
+  const jobs: Promise<boolean>[] = [];
+  for (const n of fresh) {
+    for (const r of records) {
+      if (n.targetRole !== "all" && n.targetRole !== r.role) continue;
+      jobs.push(send(r, payloadFor(n, r.locale), n.type === "emergency" || n.type === "sla_breach"));
+    }
+  }
+  await Promise.allSettled(jobs);
+}
+
+/** Notifikasi uji ke satu perangkat, dari tombol di Pengaturan. */
+export async function pushTest(endpoint: unknown) {
+  if (!pushEnabled() || typeof endpoint !== "string") return false;
+  const r = (await allRecords()).find((x) => x.sub.endpoint === endpoint);
+  if (!r) return false;
+  const title = dictionary["push.testTitle" as TranslationKey]?.[r.locale] || "HOSPI";
+  const body = dictionary["push.testBody" as TranslationKey]?.[r.locale] || "";
+  return send(r, JSON.stringify({ title, body, tag: "hospi-test", url: "/staff", urgent: false }), false);
+}
