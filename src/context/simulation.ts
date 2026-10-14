@@ -26,6 +26,7 @@ const TEMPLATES: Template[] = [
 ];
 
 let templateIndex = 0;
+const MAX_OPEN_SIMULATED = 3;
 
 export function runSimulationTick(ctx: {
   tickets: ServiceTicket[];
@@ -45,7 +46,11 @@ export function runSimulationTick(ctx: {
       t.dept !== "Duty Manager"
   );
 
-  if (Math.random() < 0.5 || movable.length === 0) {
+  // Paling banyak beberapa permintaan simulasi terbuka sekaligus, supaya
+  // tugas tidak terus menumpuk walau staf sudah menyelesaikannya.
+  const openSimulated = ctx.tickets.filter((t) => t.idempotency_key.startsWith("sim-") && ["BARU", "DITERIMA", "DIKERJAKAN"].includes(t.status)).length;
+  if (movable.length === 0 && openSimulated >= MAX_OPEN_SIMULATED) return;
+  if ((Math.random() < 0.5 && openSimulated < MAX_OPEN_SIMULATED) || movable.length === 0) {
     const occupied = ctx.rooms.filter((r) => r.guestName && !DEMO_ROOMS.has(r.roomNumber));
     if (occupied.length === 0) return;
     const room = occupied[Math.floor(Math.random() * occupied.length)];

@@ -1393,7 +1393,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ============================================================
   // Demo: simulasi hotel yang hidup & pemantau SLA
   // ============================================================
-  const [simulationEnabled, setSimulationEnabledState] = useState<boolean>(() => readJson(KEYS.simulation, true));
+  const [simulationEnabled, setSimulationEnabledState] = useState<boolean>(() => readJson(KEYS.simulation, false)); // Mati kecuali dinyalakan di Pengaturan.
   const setSimulationEnabled = useCallback((on: boolean) => {
     setSimulationEnabledState(on);
     writeJson(KEYS.simulation, on);
