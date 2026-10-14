@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LogOut, QrCode, UserPlus } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { HotelRoom, RoomStatus, isTicketClosed } from "../../types";
@@ -12,6 +12,7 @@ import { SlaTimer, StatusBadge } from "../../components/domain";
 import { seesEverything } from "./staffUtils";
 import type { Tone } from "../../lib/ticketView";
 import { ticketTitle } from "../../lib/ticketText";
+import { AccessCard, CheckInSheet } from "./GuestAccess";
 
 export const ROOM_STATUS_META: Record<RoomStatus, { key: TranslationKey; tone: Tone }> = {
   Occupied: { key: "rs.occupied", tone: "neutral" },
@@ -31,9 +32,12 @@ const SETTABLE: Record<string, RoomStatus[]> = {
 };
 
 export function RoomDrawer({ roomNo, onClose, onOpenTicket }: { roomNo: string | null; onClose: () => void; onOpenTicket: (id: string) => void }) {
-  const { rooms, tickets, role, updateRoomStatus, currentStaff, logContactReveal } = useApp();
+  const { rooms, tickets, role, updateRoomStatus, currentStaff, logContactReveal, reissueGuestAccess, checkOutGuest } = useApp();
   const { t, locale } = useI18n();
   const [revealed, setRevealed] = useState(false);
+  const [checkInOpen, setCheckInOpen] = useState(false);
+  const [confirmOut, setConfirmOut] = useState(false);
+  const [card, setCard] = useState<{ code: string } | null>(null);
   const room: HotelRoom | undefined = rooms.find((r) => r.roomNumber === roomNo);
 
   const roomTickets = useMemo(
@@ -84,7 +88,10 @@ export function RoomDrawer({ roomNo, onClose, onOpenTicket }: { roomNo: string |
 
         {room.guestName ? (
           <section className="rounded-lg border border-line p-4">
-            <p className="text-xs text-muted">{t("label.guest")}</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-muted">{t("label.guest")}</p>
+              <Badge tone={room.realGuest ? "ok" : "muted"}>{t(room.realGuest ? "guests.real" : "guests.demo")}</Badge>
+            </div>
             <p className="mt-1 text-base font-semibold">{guestNameFor(role, room.guestName)}</p>
             <dl className="mt-3 grid grid-cols-2 gap-3 text-[0.8125rem]">
               <div>
@@ -123,10 +130,62 @@ export function RoomDrawer({ roomNo, onClose, onOpenTicket }: { roomNo: string |
                 </div>
               )}
             </dl>
+            {/* Front Office: kartu akses dan check-out */}
+            {seesEverything(role) && (
+              <div className="mt-4 border-t border-line pt-4">
+                {confirmOut ? (
+                  <div className="space-y-3">
+                    <p className="text-[0.8125rem]">{t("co.confirm", { name: room.guestName, room: room.roomNumber })}</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => setConfirmOut(false)}>
+                        {t("a.cancel")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        icon={<LogOut className="h-4 w-4" />}
+                        onClick={() => {
+                          checkOutGuest(room.roomNumber);
+                          setConfirmOut(false);
+                        }}
+                      >
+                        {t("co.button")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      icon={<QrCode className="h-4 w-4" />}
+                      onClick={async () => {
+                        const res = await reissueGuestAccess(room.roomNumber);
+                        if (res) setCard(res);
+                      }}
+                    >
+                      {t("acc.reissue")}
+                    </Button>
+                    <Button size="sm" variant="danger-outline" icon={<LogOut className="h-4 w-4" />} onClick={() => setConfirmOut(true)}>
+                      {t("co.button")}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         ) : (
-          <p className="rounded-lg bg-sunken p-4 text-[0.8125rem] text-muted">{t("rooms.noGuest")}</p>
+          <div className="space-y-3 rounded-lg bg-sunken p-4">
+            <p className="text-[0.8125rem] text-muted">{t("rooms.noGuest")}</p>
+            {seesEverything(role) && (
+              <Button size="sm" variant="primary" icon={<UserPlus className="h-4 w-4" />} onClick={() => setCheckInOpen(true)}>
+                {t("ci.button")}
+              </Button>
+            )}
+          </div>
         )}
+        <CheckInSheet open={checkInOpen} defaultRoom={room.roomNumber} onClose={() => setCheckInOpen(false)} />
+        {card && <AccessCard room={room.roomNumber} code={card.code} guestName={room.guestName} guestLocale={room.guestLocale} onClose={() => setCard(null)} />}
 
         {settable.length > 0 && (
           <section>

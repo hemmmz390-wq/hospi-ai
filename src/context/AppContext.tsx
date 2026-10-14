@@ -28,7 +28,7 @@ import { FOOD_MENU } from "../data/menu";
 import { LATE_CHECKOUT_OPTIONS, STANDARD_CHECKOUT, slaConfigFor } from "../data/sla";
 import { DEFAULT_STAFF_FOR_ROLE, STAFF } from "../data/staff";
 import { UPSELL_OFFERS, pickContextualOffers } from "../data/upsellOffers";
-import { useI18n, Locale, TranslationKey } from "../i18n";
+import { useI18n, Locale, TranslationKey, LOCALE_META } from "../i18n";
 import { LOCALES } from "../i18n/types";
 import { aiService } from "../services/aiService";
 import { pmsService, posService, privacyService, systemService, SystemHealth, ticketSync } from "../services/integrationServices";
@@ -59,6 +59,15 @@ export type ExcursionRequest = {
   people: number;
   assist: boolean;
   note?: string;
+};
+
+export type RegisterGuestInput = {
+  room: string;
+  name: string;
+  locale: Locale;
+  nights: number;
+  phone?: string;
+  nationality?: string;
 };
 
 type CreateTicketInput = {
@@ -99,6 +108,16 @@ interface AppContextType {
   currentStaff: StaffMember | null;
   signInAsStaff: (role?: StaffRole, staffId?: string) => void;
   checkInToRoom: (roomNumber: string) => boolean;
+  /** Tamu sungguhan masuk dengan nomor kamar + kode akses dari Front Office. */
+  checkInWithCode: (roomNumber: string, code: string) => Promise<"ok" | "wrong_code" | "not_checked_in" | "too_many_attempts" | "offline">;
+  /** Front Office: check-in tamu sungguhan. Mengembalikan kode akses (hanya ditampilkan sekali). */
+  registerGuest: (input: RegisterGuestInput) => Promise<{ code: string } | null>;
+  /** Front Office: buat kode akses baru (kode lama langsung tidak berlaku). */
+  reissueGuestAccess: (roomNumber: string) => Promise<{ code: string } | null>;
+  /** Front Office: check-out. Akses tamu berakhir dan kamar perlu dibersihkan. */
+  checkOutGuest: (roomNumber: string) => void;
+  /** Sesi tamu masih sah (belum check-out, kode belum diganti). */
+  guestAccessValid: boolean;
   signOutRoom: () => void;
   setGuestLanguage: (lang: Language) => void;
 
@@ -217,6 +236,9 @@ const ROLE_FOR_DEPT: Record<Department, AppNotification["targetRole"]> = {
   "Food & Beverage": "food_beverage",
 };
 
+/** Waktu pembuatan pesan chat, dibaca dari id-nya (mis. "msg-1760000000000"). 0 bila tidak ada. */
+export const messageTime = (m: { id: string }) => Number(m.id.match(/(\d{13})/)?.[1] || 0);
+
 /** Tamu menyebut ingin makan di restoran, bukan diantar ke kamar. */
 const DINE_IN_WORDS = /restoran|resto\b|makan di (sana|tempat)|dine[- ]?in|restaurant|レストラン|餐厅|식당|ресторан|sur place|im restaurant/i;
 
@@ -323,7 +345,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     (roomNumber: string) => {
       const trimmed = roomNumber.trim();
       const room = rooms.find((r) => r.roomNumber === trimmed);
-      if (!room || !room.guestName) return false;
+      // Tanpa kode hanya untuk kamar demo; kamar tamu sungguhan wajib pakai kode akses.
+      if (!room || !room.guestName || room.accessHash) return false;
       setGuestRoomState(trimmed);
       const next: Session = { kind: "guest", room: trimmed };
       setSession(next);
@@ -396,22 +419,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // ============================================================
   // Tamu yang sedang aktif
   // ============================================================
-  const guestRoomData = rooms.find((r) => r.roomNumber === guestRoom);
+  const syncedGuestRoom = rooms.find((r) => r.roomNumber === guestRoom);
+  // Tamu sungguhan yang baru masuk: sebelum data kamar tersinkron ke perangkat
+  // ini, profil dari server (saat verifikasi kode) dipakai lebih dulu.
+  const guestRoomData = useMemo<HotelRoom | undefined>(() => {
+    if (session?.kind !== "guest" || !session.access || !session.profile) return syncedGuestRoom;
+    if (syncedGuestRoom?.accessHash === session.access) return syncedGuestRoom;
+    return { ...(syncedGuestRoom || ({ roomNumber: guestRoom, floor: Number(guestRoom.slice(0, -2)) || 0, status: "Occupied", activeTickets: 0, lastCleaned: "", phoneExtension: guestRoom } as HotelRoom)), ...session.profile, accessHash: session.access, realGuest: true } as HotelRoom;
+  }, [session, syncedGuestRoom, guestRoom]);
+  const stayStart = guestRoomData?.stayStartedAt;
+  /** Hanya data masa menginap tamu saat ini, bukan tamu sebelumnya di kamar yang sama. */
+  const inStay = useCallback((iso?: string) => !stayStart || !iso || iso >= stayStart, [stayStart]);
+
+  // Sesi tamu sungguhan berakhir saat check-out atau saat kode diganti. Dinilai
+  // setelah sinkron pertama, supaya data lama di perangkat tidak mengeluarkan tamu.
+  const guestAccessValid = useMemo(() => {
+    if (session?.kind !== "guest") return true;
+    if (syncStatus !== "live") return true;
+    const room = syncedGuestRoom;
+    if (session.access) return Boolean(room?.guestName) && room?.accessHash === session.access;
+    // Sesi tanpa kode (kamar demo): tidak sah lagi bila kamar kini milik tamu sungguhan.
+    return !room?.accessHash;
+  }, [session, syncStatus, syncedGuestRoom]);
 
   const lateCheckoutRequest = useMemo<LateCheckoutRequest | null>(() => {
     const latest = tickets
-      .filter((x) => x.room === guestRoom && x.lateCheckout)
+      .filter((x) => x.room === guestRoom && x.lateCheckout && inStay(x.sla.created_at))
       .sort((a, b) => b.sla.created_at.localeCompare(a.sla.created_at))[0];
     if (!latest || !latest.lateCheckout) return null;
     const status: LateCheckoutRequest["status"] =
       latest.status === "DIBATALKAN" ? "declined" : isTicketClosed(latest.status) ? "approved" : "pending";
     return { ticket: latest, hour: latest.lateCheckout.hour, fee: latest.lateCheckout.fee, status };
-  }, [tickets, guestRoom]);
+  }, [tickets, guestRoom, inStay]);
 
   const guest = useMemo<GuestInfo>(() => {
     const approved = lateCheckoutRequest?.status === "approved";
     return {
       roomNumber: guestRoom,
+      locale: guestRoomData?.guestLocale,
+      stayStartedAt: guestRoomData?.stayStartedAt,
+      realGuest: guestRoomData?.realGuest,
       name: guestRoomData?.guestName || `Room ${guestRoom}`,
       language: languageFor(locale),
       token: `tok_room_${guestRoom}`,
@@ -439,7 +486,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }),
     [t, guest.name, guest.roomNumber]
   );
-  const chatMessages = useMemo(() => [welcome, ...(chatsByRoom[guestRoom] || [])], [welcome, chatsByRoom, guestRoom]);
+  const chatMessages = useMemo(() => {
+    const all = chatsByRoom[guestRoom] || [];
+    if (!stayStart) return [welcome, ...all];
+    const since = Date.parse(stayStart);
+    return [welcome, ...all.filter((m) => messageTime(m) >= since)];
+  }, [welcome, chatsByRoom, guestRoom, stayStart]);
 
   const appendChat = useCallback((room: string, ...msgs: ChatMessage[]) => {
     setChatsByRoom((prev) => ({ ...prev, [room]: [...(prev[room] || []), ...msgs] }));
@@ -541,8 +593,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [escalations]
   );
   const escalation = useMemo(
-    () => escalationFor(guestRoom) || [...escalations].reverse().find((e) => e.room === guestRoom) || null,
-    [escalationFor, escalations, guestRoom]
+    () => {
+      const current = escalationFor(guestRoom) || [...escalations].reverse().find((e) => e.room === guestRoom) || null;
+      // Eskalasi milik tamu sebelumnya di kamar ini tidak ditampilkan.
+      return current && inStay(current.startedAt) ? current : null;
+    },
+    [escalationFor, escalations, guestRoom, inStay]
   );
 
   /**
@@ -1462,6 +1518,112 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(t("toast.reset"), "info");
   }, [showToast, t, pushReset]);
 
+  // ============================================================
+  // Tamu sungguhan: check-in, kode akses, check-out
+  // ============================================================
+  const checkInWithCode = useCallback(
+    async (roomNumber: string, code: string) => {
+      try {
+        const res = await fetch("/api/guest/access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ room: roomNumber.trim(), code: code.trim() }) });
+        const json = await res.json().catch(() => ({}));
+        if (res.status === 429) return "too_many_attempts" as const;
+        if (res.status === 404) return "not_checked_in" as const;
+        if (!res.ok || !json.ok) return "wrong_code" as const;
+        const r = json.room;
+        const next: Session = {
+          kind: "guest",
+          room: r.roomNumber,
+          access: r.accessHash,
+          profile: { guestName: r.guestName, guestLocale: r.guestLocale, guestLanguage: r.guestLanguage, roomType: r.roomType, checkInDate: r.checkInDate, checkOutDate: r.checkOutDate },
+        };
+        setGuestRoomState(r.roomNumber);
+        setSession(next);
+        sessionService.save(next);
+        return "ok" as const;
+      } catch {
+        return "offline" as const;
+      }
+    },
+    []
+  );
+
+  const issueAccess = async (roomNumber: string) => {
+    const res = await fetch("/api/guest/issue", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ room: roomNumber }) });
+    if (!res.ok) throw new Error(String(res.status));
+    return (await res.json()) as { code: string; hash: string };
+  };
+
+  const registerGuest = useCallback(
+    async ({ room, name, locale: guestLocale, nights, phone, nationality }: RegisterGuestInput) => {
+      try {
+        const { code, hash } = await issueAccess(room);
+        const now = new Date();
+        const out = new Date(now);
+        out.setDate(out.getDate() + Math.max(1, nights));
+        out.setHours(12, 0, 0, 0);
+        setRooms((prev) =>
+          prev.map((r) =>
+            r.roomNumber === room
+              ? {
+                  ...r,
+                  guestName: name.trim(),
+                  guestLocale,
+                  guestLanguage: LOCALE_META[guestLocale].name,
+                  guestPhone: phone?.trim() || undefined,
+                  guestEmail: undefined,
+                  nationality: nationality?.trim() || undefined,
+                  checkInDate: now.toISOString(),
+                  checkOutDate: out.toISOString(),
+                  stayStartedAt: now.toISOString(),
+                  status: "Occupied",
+                  realGuest: true,
+                  accessHash: hash,
+                }
+              : r
+          )
+        );
+        showToast(t("ci.done", { room }), "success");
+        return { code };
+      } catch {
+        showToast(t("ci.failed"), "error");
+        return null;
+      }
+    },
+    [showToast, t]
+  );
+
+  const reissueGuestAccess = useCallback(
+    async (roomNumber: string) => {
+      try {
+        const { code, hash } = await issueAccess(roomNumber);
+        setRooms((prev) => prev.map((r) => (r.roomNumber === roomNumber ? { ...r, accessHash: hash, realGuest: true } : r)));
+        return { code };
+      } catch {
+        showToast(t("ci.failed"), "error");
+        return null;
+      }
+    },
+    [showToast, t]
+  );
+
+  const checkOutGuest = useCallback(
+    (roomNumber: string) => {
+      const now = new Date().toISOString();
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.roomNumber === roomNumber
+            ? { ...r, guestName: "", guestLocale: undefined, guestLanguage: "", guestPhone: undefined, guestEmail: undefined, nationality: undefined, checkOutDate: now, status: "Needs Cleaning", realGuest: false, accessHash: undefined, stayStartedAt: now }
+            : r
+        )
+      );
+      setEscalations((prev) => prev.map((e) => (e.room === roomNumber && e.status !== "selesai" ? { ...e, status: "selesai", aiPaused: false } : e)));
+      showToast(t("co.done", { room: roomNumber }), "success");
+    },
+    [showToast, t]
+  );
+
+  const visibleFolio = useMemo(() => folioCharges.filter((c) => inStay(c.postedAt)), [folioCharges, inStay]);
+
   const value: AppContextType = {
     syncStatus,
     role,
@@ -1473,6 +1635,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     currentStaff,
     signInAsStaff,
     checkInToRoom,
+    checkInWithCode,
+    registerGuest,
+    reissueGuestAccess,
+    checkOutGuest,
+    guestAccessValid,
     signOutRoom,
     setGuestLanguage,
     tickets,
@@ -1532,7 +1699,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     sendAgentReply,
     resolveEscalation,
     integrations,
-    folioCharges,
+    folioCharges: visibleFolio,
     refreshIntegrations,
     chargeToFolio,
     privacyLog,

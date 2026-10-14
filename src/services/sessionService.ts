@@ -11,7 +11,13 @@ import { Role } from "../types";
  * Saat autentikasi sungguhan dipasang, hanya berkas ini yang perlu diganti.
  */
 export type Session =
-  | { kind: "guest"; room: string }
+  | {
+      kind: "guest";
+      room: string;
+      /** Tamu sungguhan: sidik jari kode akses saat masuk, dan profil kamarnya. */
+      access?: string;
+      profile?: { guestName: string; guestLocale?: string; guestLanguage?: string; roomType?: string; checkInDate?: string; checkOutDate?: string };
+    }
   | { kind: "staff"; role: Exclude<Role, "tourist">; staffId: string };
 
 const KEY = "hospi_session_v2";

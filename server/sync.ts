@@ -334,5 +334,6 @@ export async function handleSync(input: SyncRequest): Promise<SyncResponse> {
 export const syncStore = {
   tickets: async () => (await getBackend().all()).data.tickets || [],
   getTicket: async (id: string) => (await getBackend().get("tickets", [id])).get(id),
+  getRoom: async (no: string) => (await getBackend().get("rooms", [no])).get(no),
   putTicket: async (t: Entity) => getBackend().write([{ c: "tickets", e: t, ts: Date.now() }]),
 };

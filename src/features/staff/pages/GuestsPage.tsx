@@ -1,13 +1,14 @@
 import React, { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, ShieldCheck } from "lucide-react";
+import { Search, ShieldCheck, UserPlus } from "lucide-react";
 import { useApp } from "../../../context/AppContext";
 import { useI18n } from "../../../i18n";
 import { LOCALE_META, Locale } from "../../../i18n/types";
 import { isTicketClosed } from "../../../types";
 import { guestNameFor, maskEmail, maskPhone } from "../../../lib/privacy";
-import { Card, Input } from "../../../components/ui";
-import { useDetailParams } from "../staffUtils";
+import { Button, Card, Input } from "../../../components/ui";
+import { seesEverything, useDetailParams } from "../staffUtils";
+import { CheckInSheet } from "../GuestAccess";
 
 /**
  * Tamu yang sedang menginap. Kontak selalu tersamar di daftar; membukanya
@@ -19,6 +20,7 @@ export function GuestsPage() {
   const [params] = useSearchParams();
   const { openRoom } = useDetailParams();
   const [q, setQ] = useState(params.get("q") || "");
+  const [checkInOpen, setCheckInOpen] = useState(false);
 
   const guests = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -47,9 +49,16 @@ export function GuestsPage() {
           <ShieldCheck className="h-4 w-4" />
           {t("guests.privacyNote")}
         </p>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+        {seesEverything(role) && (
+          <Button variant="primary" icon={<UserPlus className="h-4 w-4" />} onClick={() => setCheckInOpen(true)}>
+            {t("ci.button")}
+          </Button>
+        )}
         <div className="relative w-full sm:w-64">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("guests.search")} aria-label={t("guests.search")} className="h-9 pl-9" />
+        </div>
         </div>
       </div>
 
@@ -92,6 +101,7 @@ export function GuestsPage() {
         </div>
       </Card>
       <p className="text-xs text-muted">{t("guests.count", { n: guests.length })}</p>
+      <CheckInSheet open={checkInOpen} onClose={() => setCheckInOpen(false)} />
     </div>
   );
 }

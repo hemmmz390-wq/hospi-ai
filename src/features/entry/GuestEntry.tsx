@@ -12,33 +12,71 @@ import { Button, Input } from "../../components/ui";
  * terbaca. Tidak perlu akun.
  */
 export function GuestEntry() {
-  const { checkInToRoom, hasCheckedIn, sessionKind } = useApp();
+  const { checkInToRoom, checkInWithCode, hasCheckedIn, sessionKind } = useApp();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [room, setRoom] = useState(params.get("room") || "");
+  const [code, setCode] = useState(params.get("code") || "");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [ended] = useState(() => {
+    let flag = params.get("ended") === "1";
+    try {
+      flag = flag || sessionStorage.getItem("hospi_stay_ended") === "1";
+    } catch {
+      /* abaikan */
+    }
+    return flag;
+  });
+  // Catatan dihapus setelah dibaca (di effect, bukan di initializer: StrictMode memanggilnya dua kali).
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("hospi_stay_ended");
+    } catch {
+      /* abaikan */
+    }
+  }, []);
   const tried = useRef(false);
 
-  // Jalur QR: ?room=508 langsung masuk.
+  /**
+   * Masuk: dengan kode → diperiksa server (tamu sungguhan). Tanpa kode → kamar
+   * demo; bila ternyata kamar tamu sungguhan, tamu diminta memasukkan kode.
+   */
+  const enter = async (roomNo: string, accessCode: string) => {
+    const r = roomNo.trim();
+    if (!r) return setError(t("entry.errorEmpty"));
+    setBusy(true);
+    setError(null);
+    try {
+      if (!accessCode.trim() && checkInToRoom(r)) return navigate("/guest", { replace: true });
+      const result = await checkInWithCode(r, accessCode);
+      if (result === "ok") return navigate("/guest", { replace: true });
+      if (result === "wrong_code") setError(accessCode.trim() ? t("entry.errorCode") : t("entry.errorNeedCode"));
+      else if (result === "not_checked_in") setError(t("entry.errorNotIn", { room: r }));
+      else if (result === "too_many_attempts") setError(t("entry.errorLimit"));
+      else setError(t("entry.errorOffline"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Jalur QR: ?room=508 (demo) atau ?room=305&code=AB12CD (tamu sungguhan) langsung masuk.
   useEffect(() => {
     if (tried.current) return;
     tried.current = true;
     const fromQr = params.get("room");
     if (fromQr) {
-      if (checkInToRoom(fromQr)) navigate("/guest", { replace: true });
-      else setError(t("entry.errorUnknown", { room: fromQr }));
+      enter(fromQr, params.get("code") || "");
       return;
     }
-    if (hasCheckedIn && sessionKind === "guest") navigate("/guest", { replace: true });
-  }, [params, checkInToRoom, navigate, t, hasCheckedIn, sessionKind]);
+    if (hasCheckedIn && sessionKind === "guest" && !ended) navigate("/guest", { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const value = room.trim();
-    if (!value) return setError(t("entry.errorEmpty"));
-    if (!checkInToRoom(value)) return setError(t("entry.errorUnknown", { room: value }));
-    navigate("/guest", { replace: true });
+    enter(room, code);
   };
 
   return (
@@ -55,6 +93,7 @@ export function GuestEntry() {
           <p className="text-[0.8125rem] font-medium text-muted">{t("entry.hotel")}</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">{t("entry.title")}</h1>
           <p className="mt-2 text-sm text-muted">{t("entry.subtitle")}</p>
+          {ended && <p className="mt-4 rounded-lg bg-ok-soft px-3 py-2.5 text-sm text-ok">{t("entry.ended")}</p>}
 
           <form onSubmit={submit} className="mt-8 space-y-3" noValidate>
             <label htmlFor="room" className="block text-[0.8125rem] font-medium">
@@ -75,19 +114,38 @@ export function GuestEntry() {
               aria-describedby={error ? "room-error" : "room-hint"}
               className="h-14 text-center text-2xl font-semibold tabular-nums tracking-[0.2em]"
             />
-            {error ? (
+            <p id="room-hint" className="flex items-center gap-1.5 text-[0.8125rem] text-muted">
+              <QrCode className="h-3.5 w-3.5" />
+              {t("entry.qrHint")}
+            </p>
+            <label htmlFor="code" className="block pt-2 text-[0.8125rem] font-medium">
+              {t("entry.code")}
+            </label>
+            <Input
+              id="code"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              value={code}
+              onChange={(e) => {
+                setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6));
+                if (error) setError(null);
+              }}
+              placeholder="AB12CD"
+              aria-describedby="code-hint"
+              className="h-12 text-center text-xl font-semibold uppercase tracking-[0.3em]"
+            />
+            <p id="code-hint" className="text-[0.8125rem] text-muted">
+              {t("entry.codeHint")}
+            </p>
+            {error && (
               <p id="room-error" role="alert" className="text-[0.8125rem] text-crit">
                 {error}
               </p>
-            ) : (
-              <p id="room-hint" className="flex items-center gap-1.5 text-[0.8125rem] text-muted">
-                <QrCode className="h-3.5 w-3.5" />
-                {t("entry.qrHint")}
-              </p>
             )}
-            <Button type="submit" variant="primary" size="lg" block>
-              {t("entry.continue")}
-              <ArrowRight className="h-4 w-4" />
+            <Button type="submit" variant="primary" size="lg" block disabled={busy}>
+              {busy ? t("entry.checking") : t("entry.continue")}
+              {!busy && <ArrowRight className="h-4 w-4" />}
             </Button>
           </form>
 

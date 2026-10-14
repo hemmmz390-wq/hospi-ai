@@ -98,9 +98,9 @@ function BottomNav() {
 }
 
 function Shell() {
-  const { guest, rooms } = useApp();
+  const { guest, guestAccessValid, signOutRoom } = useApp();
   // Tiap kamar punya bahasanya sendiri: bawaan dari profil tamu, lalu pilihan tamu.
-  const profileLocale = rooms.find((r) => r.roomNumber === guest.roomNumber)?.guestLocale;
+  const profileLocale = guest.locale;
   useLocaleScope(
     guestLocaleKey(guest.roomNumber),
     (LOCALES as readonly string[]).includes(profileLocale || "") ? (profileLocale as Locale) : detectBrowserLocale()
@@ -110,6 +110,19 @@ function Shell() {
   const sheets = useMemo(() => ({ openEmergency: () => setEmergencyOpen(true) }), []);
   const isChat = pathname.startsWith("/guest/chat");
   const navigate = useNavigate();
+
+  // Check-out oleh Front Office (atau kode diganti): sesi tamu berakhir.
+  useEffect(() => {
+    if (guestAccessValid) return;
+    // Catatan untuk halaman masuk, supaya tamu melihat "masa menginap telah berakhir".
+    try {
+      sessionStorage.setItem("hospi_stay_ended", "1");
+    } catch {
+      /* abaikan */
+    }
+    signOutRoom();
+    navigate("/stay?ended=1", { replace: true });
+  }, [guestAccessValid, signOutRoom, navigate]);
 
   // Mode presentasi mengirim pesan skenario ke aplikasi tamu di iframe.
   useEffect(() => {

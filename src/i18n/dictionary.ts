@@ -5,6 +5,7 @@ import { landing } from "./locales/landing";
 import { replies } from "./locales/replies";
 import { explore } from "./locales/explore";
 import { ops } from "./locales/ops";
+import { guests } from "./locales/guests";
 
 /**
  * Kamus tunggal aplikasi, disusun key-major: satu key berisi kedelapan bahasa
@@ -19,6 +20,7 @@ export const dictionary = {
   ...replies,
   ...explore,
   ...ops,
+  ...guests,
 };
 
 export type TranslationKey = keyof typeof dictionary;

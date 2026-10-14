@@ -13,13 +13,14 @@ export function useGuestTickets() {
   const { tickets, guest } = useApp();
   return useMemo(() => {
     const mine = tickets
-      .filter((t) => t.room === guest.roomNumber && !t.parent_ticket)
+      // Hanya permintaan selama masa menginap tamu ini, bukan tamu sebelumnya.
+      .filter((t) => t.room === guest.roomNumber && !t.parent_ticket && (!guest.stayStartedAt || t.sla.created_at >= guest.stayStartedAt))
       .sort((a, b) => b.sla.created_at.localeCompare(a.sla.created_at));
     const active = mine.filter((t) => !isTicketClosed(t.status));
     const history = mine.filter((t) => isTicketClosed(t.status));
     const awaitingRating = history.filter((t) => t.status === "SELESAI" && !t.guest_score && !t.guest_rating);
     return { mine, active, history, awaitingRating };
-  }, [tickets, guest.roomNumber]);
+  }, [tickets, guest.roomNumber, guest.stayStartedAt]);
 }
 
 /** Judul permintaan dalam bahasa tamu: pesanan memakai nomor pesanan, lainnya kategori. */

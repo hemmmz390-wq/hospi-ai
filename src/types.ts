@@ -76,6 +76,10 @@ export type RoomStatus =
 
 export interface GuestInfo {
   roomNumber: string;
+  /** Bahasa tamu dari data kamar (diatur Front Office saat check-in). */
+  locale?: string;
+  stayStartedAt?: string;
+  realGuest?: boolean;
   name: string;
   language: Language;
   token: string;
@@ -257,6 +261,12 @@ export interface HotelRoom {
   activeTickets: number;
   lastCleaned: string;
   phoneExtension: string;
+  /** Tamu sungguhan (check-in oleh Front Office), bukan data demo. */
+  realGuest?: boolean;
+  /** Sidik jari kode akses kamar (HMAC di server). Kode aslinya tidak pernah disimpan. */
+  accessHash?: string;
+  /** Awal masa menginap tamu saat ini: riwayat tamu sebelumnya tidak ditampilkan. */
+  stayStartedAt?: string;
 }
 
 export interface AppNotification {

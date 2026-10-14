@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { aiService, normalizeLocale } from "./server/ai";
 import { transcribeAudio } from "./server/ai/transcription";
 import { handleSync, syncStore, syncInstance, syncStoreKind, onNewNotifications } from "./server/sync";
+import { issueCode, verifyCode, tooManyAttempts } from "./server/guestAccess";
 import { pushEnabled, pushPublicKey, pushNotifications, pushTest, subscribe as pushSubscribe, unsubscribe as pushUnsubscribe } from "./server/push";
 
 dotenv.config();
@@ -32,6 +33,41 @@ app.get("/api/health", (_req, res) => {
 // ============================================================
 // Sync hub: satu salinan data untuk semua perangkat (lihat server/sync.ts)
 // ============================================================
+
+// ============================================================
+// Tamu sungguhan: kode akses kamar
+// ============================================================
+
+/** Front Office meminta kode baru saat check-in (atau saat mencetak ulang kartu). */
+app.post("/api/guest/issue", (req, res) => {
+  const room = String(req.body?.room || "").trim();
+  if (!/^\d{3,4}$/.test(room)) return res.status(400).json({ error: "invalid_room" });
+  res.json(issueCode(room));
+});
+
+/** Tamu masuk dengan nomor kamar + kode. Data kamar dibaca dari server, bukan dari perangkat tamu. */
+app.post("/api/guest/access", async (req, res) => {
+  const ip = String(req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+  if (tooManyAttempts(ip)) return res.status(429).json({ ok: false, error: "too_many_attempts" });
+  const room = String(req.body?.room || "").trim();
+  const code = String(req.body?.code || "").trim().toUpperCase();
+  const data: any = await syncStore.getRoom(room);
+  if (!data || !data.guestName || !data.accessHash) return res.status(404).json({ ok: false, error: "not_checked_in" });
+  if (!verifyCode(room, code, data.accessHash)) return res.status(401).json({ ok: false, error: "wrong_code" });
+  res.json({
+    ok: true,
+    room: {
+      roomNumber: data.roomNumber,
+      guestName: data.guestName,
+      guestLocale: data.guestLocale,
+      guestLanguage: data.guestLanguage,
+      roomType: data.roomType,
+      checkInDate: data.checkInDate,
+      checkOutDate: data.checkOutDate,
+      accessHash: data.accessHash,
+    },
+  });
+});
 
 // ============================================================
 // Notifikasi push ke perangkat staf
