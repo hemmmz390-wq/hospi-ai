@@ -303,6 +303,8 @@ export const ops = {
     "Sprechen Sie so lange Sie möchten und tippen Sie dann auf Fertig."
   ),
 
+  "tk.translationEn": e("Terjemahan · English", "English translation", "英語訳", "영어 번역", "英文翻译", "Перевод на английский", "Traduction anglaise", "Englische Übersetzung"),
+
   // ---------- Pengaturan bahasa staf ----------
   "set.staffLanguage": e("Bahasa staf & laporan", "Staff & report language", "スタッフ・レポートの言語", "직원·보고서 언어", "员工与报告语言", "Язык персонала и отчётов", "Langue du personnel et des rapports", "Sprache für Personal & Berichte"),
   "set.staffLanguageHint": e(

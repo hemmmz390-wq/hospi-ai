@@ -6,6 +6,7 @@ import { aiService, normalizeLocale } from "./server/ai";
 import { transcribeAudio } from "./server/ai/transcription";
 import { handleSync, syncStore, syncInstance, syncStoreKind, onNewNotifications } from "./server/sync";
 import { issueCode, verifyCode, tooManyAttempts } from "./server/guestAccess";
+import { translateToEnglish } from "./server/translate";
 import { pushEnabled, pushPublicKey, pushNotifications, pushTest, subscribe as pushSubscribe, unsubscribe as pushUnsubscribe } from "./server/push";
 
 dotenv.config();
@@ -220,6 +221,13 @@ app.post("/api/ai/process", async (req, res) => {
     console.warn("[ai] classification failed:", error?.message);
     res.status(500).json({ success: false, error: "classification_failed" });
   }
+});
+
+/** Terjemahan pesan tamu ke bahasa Inggris untuk laporan staf. */
+app.post("/api/translate", async (req, res) => {
+  const text = String(req.body?.text || "").slice(0, 1000);
+  const from = String(req.body?.from || "");
+  res.json({ text: await translateToEnglish(text, from) });
 });
 
 app.post("/api/ai/transcribe-audio", async (req, res) => {

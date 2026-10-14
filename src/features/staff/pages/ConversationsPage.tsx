@@ -168,6 +168,12 @@ export function ConversationsPage() {
                       {m.compensation && <p className="flex items-center gap-1.5 font-medium"><Gift className="h-3.5 w-3.5 shrink-0" />{t("conv.compensation", { item: t(m.compensation as TranslationKey) })}</p>}
                       {m.guestNotice && <p className="whitespace-pre-wrap break-words">{t(`g.notice.${m.guestNotice.kind}` as TranslationKey, m.guestNotice.vars)}</p>}
                       {(m.text || (!m.compensation && !m.guestNotice)) && <p className="whitespace-pre-wrap break-words">{m.aiUnavailable ? t("conv.aiUnavailable") : m.text}</p>}
+                      {guest && m.translationEn && (
+                        <p className="mt-1.5 border-t border-line pt-1.5 text-[0.8125rem] italic" lang="en">
+                          <span className="not-italic text-[0.6875rem] text-muted">{t("tk.translationEn")}: </span>
+                          {m.translationEn}
+                        </p>
+                      )}
                       {m.ticket && <p className="mt-1.5 text-[0.6875rem] opacity-70">→ {m.ticket.id} · {m.ticket.dept}</p>}
                     </div>
                   </div>

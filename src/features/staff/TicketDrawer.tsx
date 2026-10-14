@@ -337,6 +337,17 @@ export function TicketDrawer({ ticketId, onClose, onOpenTicket }: { ticketId: st
                 “{ticket.raw_text}”
               </p>
             </div>
+            {ticket.translationEn && (
+              <div className="border-t border-line pt-3">
+                <p className="flex items-center gap-1.5 text-xs text-muted">
+                  <Languages className="h-3.5 w-3.5" />
+                  {t("tk.translationEn")}
+                </p>
+                <p className="mt-1 text-sm font-medium" lang="en">
+                  “{ticket.translationEn}”
+                </p>
+              </div>
+            )}
             <div className="border-t border-line pt-3">
               {/* Instruksi mengikuti bahasa staf yang diatur Front Office. */}
               <p className="text-xs text-muted">{t("op.title", { lang: languageName(LOCALE_META[locale].name, locale) })}</p>

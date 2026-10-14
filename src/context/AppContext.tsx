@@ -253,6 +253,25 @@ export function checkoutDeadline(room: HotelRoom, tickets: ServiceTicket[]): Dat
   return out;
 }
 
+/** Kode bahasa dari nama bahasa ("Japanese" → "ja"). */
+const localeFromLanguageName = (name?: string): string | null => {
+  if (!name) return null;
+  const hit = LOCALES.find((l) => LOCALE_META[l].name === name || LOCALE_META[l].nativeName === name || l === name);
+  return hit || null;
+};
+
+/** Pesan tamu → bahasa Inggris untuk laporan staf. null bila tidak perlu atau gagal. */
+async function translateForStaff(text: string, from: string | null): Promise<string | null> {
+  if (!text.trim() || !from || from === "en") return null;
+  try {
+    const res = await fetch("/api/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, from }) });
+    if (!res.ok) return null;
+    return (await res.json()).text || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Waktu pembuatan pesan chat, dibaca dari id-nya (mis. "msg-1760000000000"). 0 bila tidak ada. */
 export const messageTime = (m: { id: string }) => Number(m.id.match(/(\d{13})/)?.[1] || 0);
 
@@ -792,6 +811,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         lastTicketNo.current = Math.max(lastTicketNo.current, Number(ticket.id.replace("HOS-", "")) || 0);
       }
       setTickets((prev) => [ticket, ...prev.filter((x) => x.id !== ticket.id)]);
+
+      if (data.channel !== "manual_fo") {
+        const created = ticket;
+        translateForStaff(data.raw_text, localeFromLanguageName(created.originalLanguage)).then((en) => {
+          if (en) setTickets((prev) => prev.map((x) => (x.id === created.id ? { ...x, translationEn: en } : x)));
+        });
+      }
 
       const title = ticket.order ? ticket.order.id : ticket.id;
       if (ticket.isEmergency) {
@@ -1379,8 +1405,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     async (text: string, voiceMeta?: { isVoiceMessage?: boolean; audioDurationSec?: number; audioUrl?: string }) => {
       if (!text.trim()) return null;
       const room = guestRoom;
+      const userMsgId = `msg-${Date.now()}`;
+      // Terjemahan Inggris untuk staf, memakai bahasa yang terdeteksi dari pesannya sendiri.
+      const translateMessage = (from: string | null) =>
+        translateForStaff(text, from).then((en) => {
+          if (en) updateChat(room, (m) => (m.id === userMsgId ? { ...m, translationEn: en } : m));
+        });
       appendChat(room, {
-        id: `msg-${Date.now()}`,
+        id: userMsgId,
         sender: "user",
         text,
         timestamp: hhmm(clock()),
@@ -1392,6 +1424,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Selama percakapan dipegang staf, AI tidak membalas sama sekali.
       const active = escalationFor(room);
       if (active?.aiPaused) {
+        // Staf sedang membalas langsung: terjemahan paling dibutuhkan di sini.
+        translateMessage(locale);
         notify({ title: "Guest message", message: `${room} · ${text}`, priority: "HIGH", targetRole: active.targetRole, roomNumber: room, type: "new_ticket" });
         return null;
       }
@@ -1399,6 +1433,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsAiProcessing(true);
       try {
         const { data } = await aiService.classify({ message: text, roomNumber: room, guestName: guest.name, guestLanguage: languageFor(locale).name, locale });
+        translateMessage(data.detectedLanguage || locale);
         let reply: ChatMessage;
 
         if (data.orderItems && data.orderItems.length > 0) {
@@ -1468,6 +1503,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data.needsHumanAgent) escalateToHuman(data.escalationReason || "kompleksitas_tinggi", text);
         return reply;
       } catch {
+        translateMessage(locale);
         // AI tidak tersedia. Pesan tamu tidak boleh hilang: tetap diteruskan
         // ke Front Office sebagai tiket, dan tamu diberi tahu dengan jujur.
         const created = await createTicket({
@@ -1488,7 +1524,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsAiProcessing(false);
       }
     },
-    [guestRoom, guest.name, locale, appendChat, escalationFor, notify, createTicket, escalateToHuman, playAlertSound, countShown]
+    [guestRoom, guest.name, locale, appendChat, updateChat, escalationFor, notify, createTicket, escalateToHuman, playAlertSound, countShown]
   );
 
   // ============================================================

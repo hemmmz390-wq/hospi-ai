@@ -187,6 +187,8 @@ export interface ServiceTicket {
   /** Jenis darurat yang dipilih tamu, bila tiket dibuat lewat tombol darurat. */
   emergencyType?: "fire" | "medical" | "security" | "other";
   translatedRequest: string; // Indonesian operational instruction for staff
+  /** Pesan tamu diterjemahkan ke bahasa Inggris (tamu berbahasa selain Inggris). */
+  translationEn?: string;
   originalLanguage: string;
   createdAtTime: string; // formatted time e.g. "21:14"
   completedAtTime?: string;
@@ -227,6 +229,8 @@ export interface ChatMessage {
   offers?: UpsellOffer[];
   /** Pesan ini dikirim oleh staf manusia, bukan AI (Human Escalation) */
   isHumanAgent?: boolean;
+  /** Terjemahan bahasa Inggris pesan tamu, untuk staf. */
+  translationEn?: string;
   /** Kabar dari AI bahwa pekerjaan selesai; teksnya disusun di layar penerima, dalam bahasanya. */
   guestNotice?: GuestNotice;
   /** Kompensasi dari Duty Manager (key kamus), ditampilkan dalam bahasa tamu. */
