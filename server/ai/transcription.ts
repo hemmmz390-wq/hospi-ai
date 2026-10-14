@@ -29,7 +29,8 @@ export async function transcribeAudio(audioBase64: string, mimeType: string, lan
           {
             role: "user",
             parts: [
-              { inlineData: { mimeType, data: audioBase64.replace(/^data:[^;]+;base64,/, "") } },
+              // "data:audio/webm;codecs=opus;base64,..." → hanya data base64-nya; tipe tanpa parameter codec.
+              { inlineData: { mimeType: mimeType.split(";")[0] || "audio/webm", data: audioBase64.replace(/^data:[^,]*,/, "") } },
               { text: prompt },
             ],
           },

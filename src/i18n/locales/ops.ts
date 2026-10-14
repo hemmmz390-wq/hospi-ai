@@ -229,6 +229,68 @@ export const ops = {
     "Diese App ist nur für Hotelpersonal. Benachrichtigungen auf diesem Gerät folgen der gewählten Rolle."
   ),
 
+  // ---------- Pesan suara: penyebab gagal yang jelas ----------
+  "g.voice.notHeard": e(
+    "Belum terdengar suara. Dekatkan HP ke mulut, bicara sedikit lebih keras, lalu coba lagi.",
+    "We didn't hear anything. Hold the phone closer, speak a little louder, and try again.",
+    "音声が聞き取れませんでした。スマホを口元に近づけ、少し大きめの声でもう一度お試しください。",
+    "소리가 들리지 않았습니다. 휴대폰을 입 가까이 대고 조금 더 크게 말씀해 주세요.",
+    "没有听到声音。请把手机靠近嘴边，稍微大声一点再试一次。",
+    "Мы ничего не услышали. Поднесите телефон ближе, говорите чуть громче и попробуйте снова.",
+    "Nous n'avons rien entendu. Rapprochez le téléphone, parlez un peu plus fort et réessayez.",
+    "Wir haben nichts gehört. Halten Sie das Handy näher, sprechen Sie etwas lauter und versuchen Sie es erneut."
+  ),
+  "g.voice.needsInternet": e(
+    "Pengenalan suara butuh koneksi internet. Periksa koneksi lalu coba lagi, atau ketik permintaan Anda.",
+    "Speech recognition needs an internet connection. Check it and try again, or type your request.",
+    "音声認識にはインターネット接続が必要です。接続を確認して再度お試しいただくか、入力してください。",
+    "음성 인식에는 인터넷 연결이 필요합니다. 연결을 확인하고 다시 시도하거나 직접 입력하세요.",
+    "语音识别需要网络连接。请检查网络后重试，或直接输入您的请求。",
+    "Для распознавания речи нужен интернет. Проверьте соединение и повторите или напишите запрос.",
+    "La reconnaissance vocale nécessite Internet. Vérifiez la connexion et réessayez, ou tapez votre demande.",
+    "Die Spracherkennung braucht Internet. Verbindung prüfen und erneut versuchen oder die Anfrage eintippen."
+  ),
+  "g.voice.noMic": e(
+    "Mikrofon tidak ditemukan atau sedang dipakai aplikasi lain. Tutup aplikasi lain yang memakai mikrofon, lalu coba lagi.",
+    "No microphone found, or another app is using it. Close other apps using the microphone and try again.",
+    "マイクが見つからないか、他のアプリが使用中です。マイクを使っている他のアプリを閉じてからお試しください。",
+    "마이크를 찾을 수 없거나 다른 앱이 사용 중입니다. 마이크를 쓰는 다른 앱을 닫고 다시 시도하세요.",
+    "未找到麦克风，或麦克风正被其他应用占用。请关闭其他使用麦克风的应用后重试。",
+    "Микрофон не найден или занят другим приложением. Закройте другие приложения с микрофоном и повторите.",
+    "Aucun micro trouvé, ou une autre application l'utilise. Fermez-la et réessayez.",
+    "Kein Mikrofon gefunden oder eine andere App nutzt es. Andere Apps schließen und erneut versuchen."
+  ),
+  "g.voice.langUnsupported": e(
+    "Browser ini belum bisa mengenali suara dalam bahasa yang dipilih. Pilih bahasa lain atau ketik permintaan Anda.",
+    "This browser can't recognise speech in the selected language. Choose another language or type your request.",
+    "このブラウザは選択した言語の音声認識に対応していません。別の言語を選ぶか、入力してください。",
+    "이 브라우저는 선택한 언어의 음성 인식을 지원하지 않습니다. 다른 언어를 선택하거나 직접 입력하세요.",
+    "此浏览器无法识别所选语言的语音。请选择其他语言或直接输入。",
+    "Этот браузер не распознаёт речь на выбранном языке. Выберите другой язык или напишите запрос.",
+    "Ce navigateur ne reconnaît pas la voix dans la langue choisie. Choisissez une autre langue ou tapez votre demande.",
+    "Dieser Browser erkennt Sprache in der gewählten Sprache nicht. Andere Sprache wählen oder Anfrage eintippen."
+  ),
+  "g.voice.speechOff": e(
+    "Pengenalan suara dimatikan di perangkat ini. Di iPhone, aktifkan Dikte di Pengaturan → Umum → Papan Ketik, atau ketik permintaan Anda.",
+    "Speech recognition is turned off on this device. On iPhone, enable Dictation in Settings → General → Keyboard, or type your request.",
+    "この端末では音声認識がオフになっています。iPhoneでは「設定→一般→キーボード」で音声入力をオンにするか、入力してください。",
+    "이 기기에서 음성 인식이 꺼져 있습니다. iPhone에서는 설정 → 일반 → 키보드에서 받아쓰기를 켜거나 직접 입력하세요.",
+    "此设备已关闭语音识别。在 iPhone 上，请在“设置→通用→键盘”中开启听写，或直接输入。",
+    "Распознавание речи отключено. На iPhone включите Диктовку в Настройки → Основные → Клавиатура или напишите запрос.",
+    "La reconnaissance vocale est désactivée. Sur iPhone, activez la Dictée dans Réglages → Général → Clavier, ou tapez votre demande.",
+    "Spracherkennung ist deaktiviert. Auf dem iPhone Diktierfunktion unter Einstellungen → Allgemein → Tastatur aktivieren oder Anfrage eintippen."
+  ),
+  "g.voice.browserUnsupported": e(
+    "Browser ini belum bisa mengubah suara menjadi teks. Buka di Chrome (Android) atau Safari (iPhone), atau ketik permintaan Anda.",
+    "This browser can't turn speech into text yet. Open it in Chrome (Android) or Safari (iPhone), or type your request.",
+    "このブラウザは音声のテキスト化に対応していません。Chrome（Android）またはSafari（iPhone）で開くか、入力してください。",
+    "이 브라우저는 음성을 텍스트로 변환할 수 없습니다. Chrome(Android)이나 Safari(iPhone)에서 열거나 직접 입력하세요.",
+    "此浏览器暂不支持语音转文字。请用 Chrome（安卓）或 Safari（iPhone）打开，或直接输入。",
+    "Этот браузер не умеет превращать речь в текст. Откройте в Chrome (Android) или Safari (iPhone) либо напишите запрос.",
+    "Ce navigateur ne sait pas encore convertir la voix en texte. Ouvrez-le dans Chrome (Android) ou Safari (iPhone), ou tapez votre demande.",
+    "Dieser Browser kann Sprache noch nicht in Text umwandeln. In Chrome (Android) oder Safari (iPhone) öffnen oder Anfrage eintippen."
+  ),
+
   // ---------- Pengaturan bahasa staf ----------
   "set.staffLanguage": e("Bahasa staf & laporan", "Staff & report language", "スタッフ・レポートの言語", "직원·보고서 언어", "员工与报告语言", "Язык персонала и отчётов", "Langue du personnel et des rapports", "Sprache für Personal & Berichte"),
   "set.staffLanguageHint": e(

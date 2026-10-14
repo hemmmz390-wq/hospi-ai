@@ -11,6 +11,9 @@ import { deptKey } from "../components";
 
 type Phase = "idle" | "recording" | "processing" | "review" | "understanding" | "done" | "unavailable";
 
+/** Batas panjang satu pesan suara (detik). */
+const MAX_SECONDS = 60;
+
 /** Contoh ucapan untuk demo, supaya fitur suara bisa dicoba tanpa mikrofon. */
 const SAMPLES: Record<string, string[]> = {
   id: ["AC kamar saya tidak dingin.", "Tolong antar dua handuk dan air mineral."],
@@ -67,19 +70,24 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
   const level = useMicLevel(stream);
 
   const transcriptRef = useRef("");
+  const finalRef = useRef("");
   const recognitionRef = useRef<any>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Status sesi rekam yang dibaca dari handler peristiwa (tidak ikut render).
+  const sessionRef = useRef({ active: false, stopping: false, error: "", restarts: 0, startedAt: 0 });
 
   const cleanup = useCallback(() => {
+    sessionRef.current.active = false;
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
     try {
-      recognitionRef.current?.stop();
+      recognitionRef.current?.abort?.();
     } catch {
       /* sudah berhenti */
     }
+    recognitionRef.current = null;
     if (recorderRef.current && recorderRef.current.state !== "inactive") {
       try {
         recorderRef.current.stop();
@@ -95,7 +103,7 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
 
   useEffect(() => {
     if (open) {
-      setPhase(voiceService.microphoneSupported() || voiceService.browserRecognitionSupported() ? "idle" : "unavailable");
+      setPhase(voiceService.browserRecognitionSupported() || voiceService.microphoneSupported() ? "idle" : "unavailable");
       setTranscript("");
       transcriptRef.current = "";
       setSeconds(0);
@@ -109,78 +117,169 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
 
   useEffect(() => () => cleanup(), [cleanup]);
 
-  const start = async () => {
-    setError(null);
-    setTranscript("");
-    transcriptRef.current = "";
-    setSeconds(0);
-    chunksRef.current = [];
+  /** Pesan yang jelas untuk tiap penyebab gagal dari pengenalan suara browser. */
+  const errorMessage = (code: string) => {
+    if (code === "not-allowed") return t("g.voice.micBlocked");
+    if (code === "service-not-allowed") return t("g.voice.speechOff");
+    if (code === "audio-capture") return t("g.voice.noMic");
+    if (code === "network") return t("g.voice.needsInternet");
+    if (code === "language-not-supported" || code === "bad-grammar") return t("g.voice.langUnsupported");
+    if (code === "no-speech") return t("g.voice.notHeard");
+    return t("g.voice.notCaught");
+  };
 
-    const recognition = voiceService.createRecognition(SPEECH_LANG[lang]);
-    if (recognition) {
-      recognition.onresult = (e: any) => {
-        let text = "";
-        for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+  const beginTimer = () => {
+    setSeconds(0);
+    sessionRef.current.startedAt = Date.now();
+    timerRef.current = setInterval(() => {
+      const elapsed = Math.round((Date.now() - sessionRef.current.startedAt) / 1000);
+      setSeconds(elapsed);
+      // Batas aman satu pesan suara.
+      if (elapsed >= MAX_SECONDS) stop();
+    }, 1000);
+  };
+
+  /** Selesai merekam: tampilkan teks untuk diperiksa, atau penyebab gagalnya. */
+  const finish = () => {
+    const sess = sessionRef.current;
+    if (!sess.active) return;
+    sess.active = false;
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+    recognitionRef.current = null;
+    const text = transcriptRef.current.trim();
+    if (!text) setError(errorMessage(sess.error || "no-speech"));
+    setPhase("review");
+  };
+
+  /**
+   * Jalur utama: pengenalan suara bawaan browser saja. Perekam audio TIDAK
+   * dijalankan bersamaan, karena di Android keduanya berebut mikrofon dan
+   * pengenalan suara jadi tidak mendengar apa pun.
+   */
+  const startRecognition = () => {
+    const joiner = lang === "ja" || lang === "zh" ? "" : " ";
+    // Android mengulang kata pada mode "continuous": pakai sesi pendek yang disambung ulang.
+    const continuous = !/android/i.test(navigator.userAgent);
+    finalRef.current = "";
+
+    const run = () => {
+      const r = voiceService.createRecognition(SPEECH_LANG[lang], continuous);
+      if (!r) return finish();
+      r.onresult = (e: any) => {
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const piece = String(e.results[i][0]?.transcript || "").trim();
+          if (!piece) continue;
+          if (e.results[i].isFinal) finalRef.current = finalRef.current ? finalRef.current + joiner + piece : piece;
+          else interim = interim ? interim + joiner + piece : piece;
+        }
+        const text = [finalRef.current, interim].filter(Boolean).join(joiner);
         transcriptRef.current = text;
         setTranscript(text);
+        sessionRef.current.error = "";
       };
-      recognition.onerror = () => {};
-      try {
-        recognition.start();
-        recognitionRef.current = recognition;
-      } catch {
-        /* sudah berjalan */
-      }
-    }
+      r.onerror = (e: any) => {
+        sessionRef.current.error = e?.error || "unknown";
+      };
+      r.onend = () => {
+        const sess = sessionRef.current;
+        if (!sess.active) return;
+        const fatal = ["not-allowed", "service-not-allowed", "audio-capture", "network", "language-not-supported"].includes(sess.error);
+        const elapsed = (Date.now() - sess.startedAt) / 1000;
+        // Browser berhenti sendiri setelah jeda: dengarkan lagi selama tamu belum menekan berhenti.
+        const keepListening = !sess.stopping && !fatal && elapsed < MAX_SECONDS && (sess.error !== "no-speech" || sess.restarts < 2);
+        if (keepListening) {
+          if (sess.error === "no-speech") sess.restarts += 1;
+          else sess.restarts = 0;
+          try {
+            run();
+            return;
+          } catch {
+            /* jatuh ke finish */
+          }
+        }
+        finish();
+      };
+      recognitionRef.current = r;
+      r.start();
+    };
 
+    try {
+      run();
+    } catch {
+      sessionRef.current.error = "unknown";
+      finish();
+      return;
+    }
+    setPhase("recording");
+    beginTimer();
+  };
+
+  /** Cadangan bila browser tidak punya pengenalan suara: rekam audio lalu transkripsi di server. */
+  const startRecorder = async () => {
     try {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       setStream(s);
-      const rec = new MediaRecorder(s);
+      const mimeType = voiceService.recorderMimeType();
+      const rec = mimeType ? new MediaRecorder(s, { mimeType }) : new MediaRecorder(s);
       recorderRef.current = rec;
+      chunksRef.current = [];
       rec.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data);
       rec.onstop = async () => {
         s.getTracks().forEach((tr) => tr.stop());
         setStream(null);
-        if (transcriptRef.current.trim()) {
-          setPhase("review");
-          return;
-        }
-        // Browser tidak menangkap teks: coba transkripsi server (butuh API key).
+        if (!sessionRef.current.active) return;
+        sessionRef.current.active = false;
+        if (timerRef.current) clearInterval(timerRef.current);
         setPhase("processing");
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || mimeType || "audio/webm" });
         const out: TranscriptionOutcome = blob.size > 0 ? await voiceService.transcribeOnServer(blob, SPEECH_LANG[lang]) : { ok: false as const, reason: "transcription_error" as const };
         // tsconfig tidak memakai strict, jadi penyempitan lewat `ok` tidak berlaku.
-        if ("reason" in out) {
-          setError(out.reason === "no_api_key" ? t("g.voice.noTranscriber") : t("g.voice.notCaught"));
-        } else {
+        if ("reason" in out) setError(out.reason === "no_api_key" ? t("g.voice.browserUnsupported") : out.reason === "network" ? t("g.voice.needsInternet") : t("g.voice.notCaught"));
+        else {
           transcriptRef.current = out.text;
           setTranscript(out.text);
         }
         setPhase("review");
       };
       rec.start(250);
-    } catch {
-      cleanup();
-      setError(t("g.voice.micBlocked"));
+      setPhase("recording");
+      beginTimer();
+    } catch (err: any) {
+      sessionRef.current.active = false;
+      setError(err?.name === "NotFoundError" || err?.name === "NotReadableError" ? t("g.voice.noMic") : t("g.voice.micBlocked"));
       setPhase("review");
-      return;
     }
+  };
 
-    setPhase("recording");
-    timerRef.current = setInterval(() => setSeconds((n) => n + 1), 1000);
+  const start = () => {
+    cleanup();
+    setError(null);
+    setTranscript("");
+    transcriptRef.current = "";
+    sessionRef.current = { active: true, stopping: false, error: "", restarts: 0, startedAt: Date.now() };
+    if (voiceService.browserRecognitionSupported()) startRecognition();
+    else if (voiceService.microphoneSupported()) startRecorder();
+    else setPhase("unavailable");
   };
 
   const stop = () => {
+    const sess = sessionRef.current;
+    sess.stopping = true;
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
+    if (recorderRef.current && recorderRef.current.state !== "inactive") {
+      recorderRef.current.stop();
+      return;
+    }
+    // Kata terakhir baru datang setelah berhenti: tunggu "onend", dengan batas waktu.
     try {
       recognitionRef.current?.stop();
     } catch {
       /* sudah berhenti */
     }
-    if (recorderRef.current && recorderRef.current.state !== "inactive") recorderRef.current.stop();
-    else setPhase("review");
+    setTimeout(finish, 1800);
   };
 
   const send = async (text: string) => {
@@ -194,9 +293,11 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
   if (!open) return null;
 
   const mmss = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  // Jalur pengenalan suara browser tidak memberi level mikrofon: pakai gelombang tenang.
+  const shown = stream ? level : 0.35 + 0.25 * Math.sin(seconds * 2);
   const bars = Array.from({ length: 24 }, (_, i) => {
     const wave = Math.sin((i / 24) * Math.PI);
-    return 6 + Math.round(wave * level * 42 * (0.6 + ((i * 7) % 5) / 10));
+    return 6 + Math.round(wave * shown * 42 * (0.6 + ((i * 7) % 5) / 10));
   });
 
   return (

@@ -23,14 +23,21 @@ export const voiceService = {
     return typeof navigator !== "undefined" && Boolean(navigator.mediaDevices?.getUserMedia) && typeof MediaRecorder !== "undefined";
   },
 
-  createRecognition(lang: string): any | null {
+  createRecognition(lang: string, continuous = true): any | null {
     const Ctor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!Ctor) return null;
     const r = new Ctor();
-    r.continuous = true;
+    r.continuous = continuous;
     r.interimResults = true;
+    r.maxAlternatives = 1;
     r.lang = lang;
     return r;
+  },
+
+  /** Format rekaman yang benar-benar didukung browser ini (Safari/iPhone tidak mendukung webm). */
+  recorderMimeType(): string | undefined {
+    if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return undefined;
+    return ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus", "audio/aac"].find((m) => MediaRecorder.isTypeSupported(m));
   },
 
   async transcribeOnServer(blob: Blob, languageHint: string): Promise<TranscriptionOutcome> {
