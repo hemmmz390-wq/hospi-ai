@@ -14,6 +14,7 @@ export const KEYS = {
   notifications: "hospi_notifs_v4",
   chats: "hospi_chats_v4",
   escalations: "hospi_escalations_v4",
+  pushSubs: "hospi_pushsubs_v1",
   seededAt: "hospi_seeded_at_v4",
   simulation: "hospi_simulation_v2",
   alarmMuted: "hospi_alarm_muted_v1",

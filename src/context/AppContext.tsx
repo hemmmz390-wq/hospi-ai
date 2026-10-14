@@ -280,6 +280,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => writeJson(KEYS.notifications, notifications), [notifications]);
   useEffect(() => writeJson(KEYS.chats, chatsByRoom), [chatsByRoom]);
   useEffect(() => writeJson(KEYS.escalations, escalations), [escalations]);
+  // Langganan notifikasi HP: disimpan di perangkat dan tersinkron, supaya pulih setelah server restart.
+  const [pushSubs, setPushSubs] = useState<Record<string, any>[]>(() => readJson(KEYS.pushSubs, []));
+  useEffect(() => writeJson(KEYS.pushSubs, pushSubs), [pushSubs]);
 
   // Sinkronisasi antar-perangkat (dan antar-tab) lewat server. Tamu di HP,
   // Front Office di laptop: laporan tamu muncul di dashboard dalam 1–2 detik.
@@ -291,11 +294,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       notifications,
       escalations,
       chats: chatsByRoom,
+      pushSubs,
       setTickets,
       setRooms,
       setNotifications,
       setEscalations,
       setChats: setChatsByRoom,
+      setPushSubs,
     },
     setSyncStatus
   );

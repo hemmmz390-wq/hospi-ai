@@ -291,6 +291,18 @@ export const ops = {
     "Dieser Browser kann Sprache noch nicht in Text umwandeln. In Chrome (Android) oder Safari (iPhone) öffnen oder Anfrage eintippen."
   ),
 
+  "g.voice.done": e("Selesai bicara", "I'm done", "話し終わった", "말하기 끝", "说完了", "Готово", "J'ai terminé", "Fertig"),
+  "g.voice.tapDone": e(
+    "Bicara selama yang Anda perlukan, lalu tekan Selesai bicara.",
+    "Speak for as long as you need, then tap I'm done.",
+    "必要なだけお話しください。終わったら「話し終わった」を押してください。",
+    "필요한 만큼 말씀하신 뒤 '말하기 끝'을 누르세요.",
+    "想说多久都可以，说完后请点“说完了”。",
+    "Говорите сколько нужно, затем нажмите «Готово».",
+    "Parlez aussi longtemps que nécessaire, puis touchez J'ai terminé.",
+    "Sprechen Sie so lange Sie möchten und tippen Sie dann auf Fertig."
+  ),
+
   // ---------- Pengaturan bahasa staf ----------
   "set.staffLanguage": e("Bahasa staf & laporan", "Staff & report language", "スタッフ・レポートの言語", "직원·보고서 언어", "员工与报告语言", "Язык персонала и отчётов", "Langue du personnel et des rapports", "Sprache für Personal & Berichte"),
   "set.staffLanguageHint": e(

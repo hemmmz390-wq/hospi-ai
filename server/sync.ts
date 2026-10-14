@@ -20,7 +20,8 @@ import { RedisLike, redisFromEnv } from "./redis";
 
 type Entity = Record<string, any> & { _ts?: number; _rev?: number };
 
-export const COLLECTIONS = ["tickets", "rooms", "notifications", "escalations", "chats"] as const;
+/** pushSubs: langganan notifikasi HP, ikut tersinkron supaya tidak hilang saat server restart. */
+export const COLLECTIONS = ["tickets", "rooms", "notifications", "escalations", "chats", "pushSubs"] as const;
 export type Collection = (typeof COLLECTIONS)[number];
 export type Changes = Partial<Record<Collection, Entity[]>>;
 type Epoch = { id: string; provisional: boolean };
@@ -32,6 +33,7 @@ const KEY: Record<Collection, (e: Entity) => string> = {
   notifications: (e) => e.id,
   escalations: (e) => e.id,
   chats: (e) => e.room,
+  pushSubs: (e) => e.endpoint,
 };
 
 export interface SyncRequest {
@@ -308,7 +310,8 @@ export async function handleSync(input: SyncRequest): Promise<SyncResponse> {
   if (req.full) {
     if (clientWins(req, server)) {
       await b.reset({ id: req.epoch!, provisional: req.provisional });
-      await applyFull(b, req.full, undefined, now);
+      // Server baru restart: notifikasi yang baru dibuat perangkat ini tetap dikirim ke HP.
+      await announce(await applyFull(b, req.full, req.dirty, now));
     } else if (server && req.epoch === server.id) {
       await announce(await applyFull(b, req.full, req.dirty, now));
     } else {
@@ -335,5 +338,7 @@ export const syncStore = {
   tickets: async () => (await getBackend().all()).data.tickets || [],
   getTicket: async (id: string) => (await getBackend().get("tickets", [id])).get(id),
   getRoom: async (no: string) => (await getBackend().get("rooms", [no])).get(no),
+  pushSubs: async () => (await getBackend().all()).data.pushSubs || [],
+  putPushSub: async (e: Entity) => getBackend().write([{ c: "pushSubs", e, ts: Date.now() }]),
   putTicket: async (t: Entity) => getBackend().write([{ c: "tickets", e: t, ts: Date.now() }]),
 };

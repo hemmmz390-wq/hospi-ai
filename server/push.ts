@@ -1,5 +1,5 @@
 import webpush from "web-push";
-import { redisFromEnv, RedisLike } from "./redis";
+import { syncStore } from "./sync";
 import { dictionary, TranslationKey } from "../src/i18n/dictionary";
 import { LOCALES, Locale } from "../src/i18n/types";
 
@@ -60,35 +60,19 @@ export function pushEnabled(): boolean {
 export const pushPublicKey = () => (pushEnabled() ? process.env.VAPID_PUBLIC_KEY! : null);
 
 // ---------------- Penyimpanan langganan ----------------
-const memory = new Map<string, Record_>();
-let redis: RedisLike | null | undefined;
-const getRedis = () => (redis === undefined ? (redis = redisFromEnv()) : redis);
-
+// Disimpan sebagai koleksi tersinkron "pushSubs": ikut tersalin ke perangkat
+// staf, sehingga setelah server restart daftar HP pulih dari perangkat yang
+// tersambung berikutnya (Redis bila dipasang, memori bila tidak).
 async function saveRecord(r: Record_) {
-  const db = getRedis();
-  if (db) await db.command(["HSET", HASH, r.sub.endpoint, JSON.stringify(r)]);
-  else memory.set(r.sub.endpoint, r);
+  await syncStore.putPushSub({ endpoint: r.sub.endpoint, ...r, deleted: false });
 }
 
 async function removeRecord(endpoint: string) {
-  const db = getRedis();
-  if (db) await db.command(["HDEL", HASH, endpoint]);
-  else memory.delete(endpoint);
+  await syncStore.putPushSub({ endpoint, deleted: true, at: Date.now() });
 }
 
 async function allRecords(): Promise<Record_[]> {
-  const db = getRedis();
-  if (!db) return [...memory.values()];
-  const flat = (await db.command<string[]>(["HGETALL", HASH])) || [];
-  const out: Record_[] = [];
-  for (let i = 1; i < flat.length; i += 2) {
-    try {
-      out.push(JSON.parse(flat[i]));
-    } catch {
-      /* abaikan data rusak */
-    }
-  }
-  return out;
+  return ((await syncStore.pushSubs()) as any[]).filter((e) => !e.deleted && e.sub?.endpoint) as Record_[];
 }
 
 // ---------------- API ----------------

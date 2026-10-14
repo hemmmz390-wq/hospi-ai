@@ -14,7 +14,7 @@ import { readJson, writeJson } from "./persistence";
  * - Reset demo membuat "epoch" baru; perangkat lain otomatis ikut.
  */
 
-type Collection = "tickets" | "rooms" | "notifications" | "escalations" | "chats";
+type Collection = "tickets" | "rooms" | "notifications" | "escalations" | "chats" | "pushSubs";
 type ChatEntity = { room: string; messages: ChatMessage[] };
 type AnyEntity = Record<string, any>;
 
@@ -34,8 +34,9 @@ const KEY: Record<Collection, (e: AnyEntity) => string> = {
   notifications: (e) => e.id,
   escalations: (e) => e.id,
   chats: (e) => e.room,
+  pushSubs: (e) => e.endpoint,
 };
-const COLLECTIONS: Collection[] = ["tickets", "rooms", "notifications", "escalations", "chats"];
+const COLLECTIONS: Collection[] = ["tickets", "rooms", "notifications", "escalations", "chats", "pushSubs"];
 
 export interface SyncBindings {
   tickets: ServiceTicket[];
@@ -43,11 +44,14 @@ export interface SyncBindings {
   notifications: AppNotification[];
   escalations: EscalationSession[];
   chats: Record<string, ChatMessage[]>;
+  /** Langganan notifikasi HP (dibawa perangkat, tidak ditampilkan). */
+  pushSubs: AnyEntity[];
   setTickets: React.Dispatch<React.SetStateAction<ServiceTicket[]>>;
   setRooms: React.Dispatch<React.SetStateAction<HotelRoom[]>>;
   setNotifications: React.Dispatch<React.SetStateAction<AppNotification[]>>;
   setEscalations: React.Dispatch<React.SetStateAction<EscalationSession[]>>;
   setChats: React.Dispatch<React.SetStateAction<Record<string, ChatMessage[]>>>;
+  setPushSubs: React.Dispatch<React.SetStateAction<AnyEntity[]>>;
 }
 
 export type SyncStatus = "connecting" | "live" | "offline";
@@ -167,6 +171,7 @@ export function useServerSync(bindings: SyncBindings, onStatus: (s: SyncStatus) 
       if (c === "rooms") b.setRooms((p) => merge(p) as HotelRoom[]);
       if (c === "notifications") b.setNotifications((p) => merge(p) as AppNotification[]);
       if (c === "escalations") b.setEscalations((p) => merge(p) as EscalationSession[]);
+      if (c === "pushSubs") b.setPushSubs((p) => merge(p));
     }
   };
 
@@ -249,7 +254,7 @@ export function useServerSync(bindings: SyncBindings, onStatus: (s: SyncStatus) 
   useEffect(() => {
     if (debounce.current) clearTimeout(debounce.current);
     debounce.current = setTimeout(() => syncOnce(), 150);
-  }, [bindings.tickets, bindings.rooms, bindings.notifications, bindings.escalations, bindings.chats, syncOnce]);
+  }, [bindings.tickets, bindings.rooms, bindings.notifications, bindings.escalations, bindings.chats, bindings.pushSubs, syncOnce]);
 
   /** Setelah reset demo: server diberi data baru dan semua perangkat ikut. */
   const pushReset = useCallback(() => {

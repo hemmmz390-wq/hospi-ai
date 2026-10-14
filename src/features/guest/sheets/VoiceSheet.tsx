@@ -11,8 +11,8 @@ import { deptKey } from "../components";
 
 type Phase = "idle" | "recording" | "processing" | "review" | "understanding" | "done" | "unavailable";
 
-/** Batas panjang satu pesan suara (detik). */
-const MAX_SECONDS = 60;
+/** Batas aman satu pesan suara (detik). Normalnya tamu sendiri yang menekan "Selesai bicara". */
+const MAX_SECONDS = 300;
 
 /** Contoh ucapan untuk demo, supaya fitur suara bisa dicoba tanpa mikrofon. */
 const SAMPLES: Record<string, string[]> = {
@@ -58,7 +58,9 @@ function useMicLevel(stream: MediaStream | null) {
 }
 
 export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { sendChatMessage, isAiProcessing } = useApp();
+  const { sendChatMessage, isAiProcessing, health } = useApp();
+  // Server bisa mentranskripsi (Gemini): rekam audio biasa tanpa jeda, tanpa bunyi, di semua browser.
+  const serverTranscription = Boolean(health?.hasApiKey);
   const { t, locale } = useI18n();
   const [phase, setPhase] = useState<Phase>("idle");
   const [lang, setLang] = useState<Locale>(locale);
@@ -159,22 +161,36 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
    */
   const startRecognition = () => {
     const joiner = lang === "ja" || lang === "zh" ? "" : " ";
-    // Android mengulang kata pada mode "continuous": pakai sesi pendek yang disambung ulang.
-    const continuous = !/android/i.test(navigator.userAgent);
+    const join = (a: string, b: string) => (a && b ? a + joiner + b : a || b);
+    // Android mengirim hasil "final" yang menumpuk ("halo", "halo apa kabar"): gabungkan tanpa mengulang.
+    const merge = (prev: string, next: string) => {
+      if (!prev) return next;
+      if (next.startsWith(prev)) return next;
+      if (prev.endsWith(next)) return prev;
+      return join(prev, next);
+    };
     finalRef.current = "";
+    let sessionFinal = "";
+    let interim = "";
 
     const run = () => {
-      const r = voiceService.createRecognition(SPEECH_LANG[lang], continuous);
+      // continuous di semua perangkat: makin jarang mesin berhenti, makin jarang bunyi "bip" di Android.
+      const r = voiceService.createRecognition(SPEECH_LANG[lang], true);
       if (!r) return finish();
+      sessionFinal = "";
+      interim = "";
       r.onresult = (e: any) => {
-        let interim = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
+        let fin = "";
+        let mid = "";
+        for (let i = 0; i < e.results.length; i++) {
           const piece = String(e.results[i][0]?.transcript || "").trim();
           if (!piece) continue;
-          if (e.results[i].isFinal) finalRef.current = finalRef.current ? finalRef.current + joiner + piece : piece;
-          else interim = interim ? interim + joiner + piece : piece;
+          if (e.results[i].isFinal) fin = merge(fin, piece);
+          else mid = piece;
         }
-        const text = [finalRef.current, interim].filter(Boolean).join(joiner);
+        sessionFinal = fin;
+        interim = mid;
+        const text = join(join(finalRef.current, sessionFinal), interim);
         transcriptRef.current = text;
         setTranscript(text);
         sessionRef.current.error = "";
@@ -183,15 +199,16 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
         sessionRef.current.error = e?.error || "unknown";
       };
       r.onend = () => {
+        // Simpan hasil sesi ini sebelum sesi berikutnya dimulai.
+        finalRef.current = join(finalRef.current, join(sessionFinal, interim));
+        transcriptRef.current = finalRef.current;
+        sessionFinal = "";
+        interim = "";
         const sess = sessionRef.current;
         if (!sess.active) return;
         const fatal = ["not-allowed", "service-not-allowed", "audio-capture", "network", "language-not-supported"].includes(sess.error);
-        const elapsed = (Date.now() - sess.startedAt) / 1000;
-        // Browser berhenti sendiri setelah jeda: dengarkan lagi selama tamu belum menekan berhenti.
-        const keepListening = !sess.stopping && !fatal && elapsed < MAX_SECONDS && (sess.error !== "no-speech" || sess.restarts < 2);
-        if (keepListening) {
-          if (sess.error === "no-speech") sess.restarts += 1;
-          else sess.restarts = 0;
+        // Mesin berhenti sendiri (jeda, batas waktu mesin): terus dengarkan sampai tamu menekan selesai.
+        if (!sess.stopping && !fatal && (Date.now() - sess.startedAt) / 1000 < MAX_SECONDS) {
           try {
             run();
             return;
@@ -259,7 +276,8 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
     setTranscript("");
     transcriptRef.current = "";
     sessionRef.current = { active: true, stopping: false, error: "", restarts: 0, startedAt: Date.now() };
-    if (voiceService.browserRecognitionSupported()) startRecognition();
+    if (serverTranscription && voiceService.microphoneSupported()) startRecorder();
+    else if (voiceService.browserRecognitionSupported()) startRecognition();
     else if (voiceService.microphoneSupported()) startRecorder();
     else setPhase("unavailable");
   };
@@ -392,8 +410,15 @@ export function VoiceSheet({ open, onClose }: { open: boolean; onClose: () => vo
               ))}
             </div>
             <p className={cn("mt-5 min-h-[44px] max-w-sm text-center text-sm", transcript ? "text-fg" : "text-subtle")}>{transcript || t("g.voice.speakNow")}</p>
-            <button type="button" onClick={stop} aria-label={t("g.voice.stop")} className="mt-4 flex h-14 w-14 items-center justify-center rounded-full border border-line hover:bg-sunken">
-              <Square className="h-5 w-5 fill-current" />
+            <p className="mt-3 max-w-xs text-center text-xs text-muted">{t("g.voice.tapDone")}</p>
+            <button
+              type="button"
+              onClick={stop}
+              aria-label={t("g.voice.stop")}
+              className="mt-4 inline-flex h-14 items-center gap-2 rounded-full bg-fg px-6 text-[0.9375rem] font-semibold text-inverse active:scale-95"
+            >
+              <Square className="h-4 w-4 fill-current" />
+              {t("g.voice.done")}
             </button>
           </div>
         )}
