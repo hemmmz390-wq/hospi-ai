@@ -4,7 +4,7 @@
   "short_name": "HOSPI Staff",
   "description": "Dashboard staf HOSPI AI: tiket tamu, SLA, dan notifikasi untuk tiap departemen hotel.",
   "start_url": "/staff",
-  "scope": "/",
+  "scope": "/staff",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f7f7f5",

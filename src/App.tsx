@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppProvider, useApp } from "./context/AppContext";
 import { I18nProvider } from "./i18n";
@@ -37,13 +37,23 @@ function Home() {
  * langsung masuk sebagai Front Office.
  */
 function StaffAppOnly({ children }: { children: React.ReactNode }) {
-  const { pathname, search } = useLocation();
-  const { hasCheckedIn, sessionKind } = useApp();
-  if (!isStandalone()) return <>{children}</>;
+  const { pathname } = useLocation();
+  const { hasCheckedIn, sessionKind, signInAsStaff } = useApp();
+  const standalone = isStandalone();
   const staffSession = hasCheckedIn && sessionKind === "staff";
-  if (pathname.startsWith("/staff")) return staffSession ? <>{children}</> : <Navigate to="/enter?as=front_office" replace />;
-  if (pathname === "/enter" && new URLSearchParams(search).get("as") !== "guest") return <>{children}</>;
-  return <Navigate to={staffSession ? "/staff" : "/enter?as=front_office"} replace />;
+  // Dibuka dari ikon aplikasi tanpa sesi staf: langsung masuk sebagai Front Office.
+  const autoSignIn = standalone && pathname.startsWith("/staff") && !staffSession;
+  useEffect(() => {
+    if (autoSignIn) signInAsStaff("front_office");
+  }, [autoSignIn, signInAsStaff]);
+  if (!standalone) return <>{children}</>;
+  if (autoSignIn) return <PageFallback />;
+  // Halaman pemasaran, demo, dan presentasi tidak dibuka di aplikasi staf.
+  // Link tamu (/stay, /guest) tetap dibuka apa adanya: aplikasi staf yang
+  // ter-install versi lama bisa "menangkap" link tamu, dan tamu tidak boleh
+  // malah diarahkan ke dashboard staf.
+  if (pathname === "/" || pathname === "/demo" || pathname === "/present") return <Navigate to="/staff" replace />;
+  return <>{children}</>;
 }
 
 function RequireGuest({ children }: { children: React.ReactNode }) {

@@ -25,7 +25,7 @@ const GUEST_ROOMS = ["508", "812", "501", "102"];
  * salah satu peran staf. Tidak perlu keluar dan masuk ulang.
  */
 export function ViewSwitcher({ compact }: { compact?: boolean }) {
-  const { role, sessionKind, guest, rooms } = useApp();
+  const { role, sessionKind, guest, rooms, signInAsStaff } = useApp();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -98,7 +98,13 @@ export function ViewSwitcher({ compact }: { compact?: boolean }) {
                   <button
                     key={r}
                     type="button"
-                    onClick={() => go(`/enter?as=${r}`)}
+                    onClick={() => {
+                      // Di aplikasi staf, tetap di dalam /staff (cakupan aplikasi yang ter-install).
+                      if (staffOnly) {
+                        signInAsStaff(r);
+                        go("/staff");
+                      } else go(`/enter?as=${r}`);
+                    }}
                     className={cn(
                       "flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
                       current ? "border-fg bg-fg text-inverse" : "border-line bg-surface hover:border-line-strong hover:bg-sunken"
