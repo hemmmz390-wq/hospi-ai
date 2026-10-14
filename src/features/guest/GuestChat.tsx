@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowUp, Mic, X, Headset, UtensilsCrossed, AlertCircle, Phone, MapPin, Gift } from "lucide-react";
+import { ArrowUp, Mic, X, Headset, UtensilsCrossed, AlertCircle, Phone, MapPin, Gift, CheckCircle2 } from "lucide-react";
 import { useApp } from "../../context/AppContext";
 import { useI18n, TranslationKey } from "../../i18n";
 import { ChatMessage, UpsellOffer } from "../../types";
@@ -173,6 +173,11 @@ function Message({ m }: { m: ChatMessage }) {
         <p className="flex items-start gap-2 text-sm">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
           {t("g.chat.aiUnavailable")}
+        </p>
+      ) : m.guestNotice ? (
+        <p className="flex items-start gap-2 rounded-lg border border-ok/30 bg-ok-soft p-3 text-sm leading-relaxed">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-ok" />
+          {t(`g.notice.${m.guestNotice.kind}` as TranslationKey, m.guestNotice.vars)}
         </p>
       ) : m.compensation ? (
         <div className="rounded-lg border border-ok/30 bg-ok-soft p-3">

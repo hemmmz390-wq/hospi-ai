@@ -20,6 +20,7 @@ import {
   TicketStatus,
   TimelineEntry,
   UpsellOffer,
+  GuestNotice,
   isTicketClosed,
   Attraction,
 } from "../types";
@@ -774,6 +775,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [patchTicket, showToast, t]
   );
 
+  /**
+   * AI mengabari tamu bahwa pekerjaannya selesai: pesan di chat tamu dan
+   * notifikasi untuk HP tamu (bila tamu mengizinkan). Teksnya disusun di
+   * layar tamu, jadi selalu dalam bahasa tamu. Tiket milik tamu sebelumnya
+   * di kamar yang sama tidak dikabarkan ke tamu sekarang.
+   */
+  const notifyGuestDone = useCallback(
+    (ticket: ServiceTicket, notice: GuestNotice) => {
+      const room = rooms.find((r) => r.roomNumber === ticket.room);
+      if (room?.stayStartedAt && ticket.sla.created_at < room.stayStartedAt) return;
+      if (!room?.guestName) return;
+      appendChat(ticket.room, { id: `msg-done-${Date.now()}`, sender: "ai", text: "", timestamp: hhmm(clock()), guestNotice: notice, ticket: { ...ticket, status: "SELESAI" } });
+      notify({
+        title: notice.kind,
+        message: `${ticket.order?.id || ticket.id} · ${ticket.room}`,
+        priority: "LOW",
+        targetRole: "tourist",
+        ticketId: ticket.id,
+        roomNumber: ticket.room,
+        type: "guest_update",
+        guestNotice: notice,
+        stay: room.stayStartedAt || "",
+      });
+    },
+    [rooms, appendChat, notify]
+  );
+
   const completeTicket = useCallback(
     (ticketId: string, staffName: string, proof?: { photo_after?: string; note?: string; spareparts?: string[] }) => {
       const now = clock();
@@ -793,9 +821,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           timeline: [...x.timeline, entry("selesai", staffName, proof?.note)],
         };
       });
+      // Kabari tamu: kamar selesai dibersihkan, AC atau perbaikan lain selesai.
+      const done = tickets.find((x) => x.id === ticketId);
+      if (done && !isTicketClosed(done.status)) {
+        if (done.category === "cleaning") notifyGuestDone(done, { kind: "cleaning_done" });
+        else if (done.category === "ac") notifyGuestDone(done, { kind: "ac_fixed" });
+        else if (["electricity", "plumbing", "tv_wifi"].includes(done.category)) notifyGuestDone(done, { kind: "repair_done" });
+      }
       showToast(t("toast.completed", { id: ticketId }), "success");
     },
-    [patchTicket, showToast, t]
+    [patchTicket, showToast, t, tickets, notifyGuestDone]
   );
 
   const rateAndConfirmTicket = useCallback(
@@ -1158,9 +1193,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       });
       if (target) notify({ title: "Order ready", message: `${target.order?.id || target.id} · ${target.room}`, priority: "MEDIUM", targetRole: target.diningDestination === "table" ? "food_beverage" : "housekeeping", ticketId, roomNumber: target.room, type: "order_ready" });
+      if (target?.diningDestination === "table") notifyGuestDone(target, { kind: "order_ready_table", vars: { order: target.order?.id || target.id, table: target.tableNumber || "—" } });
       showToast(t("toast.orderReady", { id: target?.order?.id || ticketId }), "success");
     },
-    [tickets, patchTicket, notify, showToast, t]
+    [tickets, patchTicket, notify, showToast, t, notifyGuestDone]
   );
 
   // ============================================================

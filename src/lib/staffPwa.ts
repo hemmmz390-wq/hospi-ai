@@ -98,7 +98,8 @@ async function post(url: string, body: unknown) {
  * dikirim, sehingga HP Housekeeping hanya berbunyi untuk tugas Housekeeping,
  * dalam bahasa yang diatur Front Office.
  */
-export function usePush(role: string, locale: string) {
+/** extra: untuk HP tamu, kamar dan masa menginapnya. */
+export function usePush(role: string, locale: string, extra?: { room: string; stay: string }) {
   const [state, setState] = useState<PushState>("loading");
   const [error, setError] = useState<string | null>(null);
 
@@ -126,9 +127,10 @@ export function usePush(role: string, locale: string) {
     (async () => {
       const reg = await navigator.serviceWorker.getRegistration("/");
       const sub = await reg?.pushManager.getSubscription();
-      if (sub) await post("/api/push/subscribe", { subscription: sub.toJSON(), role, locale }).catch(() => {});
+      if (sub) await post("/api/push/subscribe", { subscription: sub.toJSON(), role, locale, ...extra }).catch(() => {});
     })();
-  }, [state, role, locale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, role, locale, extra?.room, extra?.stay]);
 
   const enable = useCallback(async () => {
     setError(null);
@@ -141,7 +143,7 @@ export function usePush(role: string, locale: string) {
       const sub =
         (await reg.pushManager.getSubscription()) ||
         (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) }));
-      await post("/api/push/subscribe", { subscription: sub.toJSON(), role, locale });
+      await post("/api/push/subscribe", { subscription: sub.toJSON(), role, locale, ...extra });
       try {
         localStorage.setItem(ENDPOINT_KEY, sub.endpoint);
       } catch {
@@ -152,7 +154,8 @@ export function usePush(role: string, locale: string) {
       setError((err as Error)?.message || "error");
       setState("off");
     }
-  }, [role, locale]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, locale, extra?.room, extra?.stay]);
 
   const disable = useCallback(async () => {
     const reg = await navigator.serviceWorker.getRegistration("/");

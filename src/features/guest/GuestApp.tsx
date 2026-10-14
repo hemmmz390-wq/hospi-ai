@@ -14,6 +14,7 @@ import { GuestChat } from "./GuestChat";
 import { GuestMore } from "./GuestMore";
 import { GuestExplore } from "./GuestExplore";
 import { EmergencySheet } from "./sheets/EmergencySheet";
+import { useGuestNoticeAlerts } from "./GuestNotify";
 import { CartProvider, useCart } from "./cart";
 
 /**
@@ -106,6 +107,8 @@ function Shell() {
     (LOCALES as readonly string[]).includes(profileLocale || "") ? (profileLocale as Locale) : detectBrowserLocale()
   );
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  // Pemberitahuan saat AI mengabari pekerjaan selesai.
+  useGuestNoticeAlerts();
   const { pathname } = useLocation();
   const sheets = useMemo(() => ({ openEmergency: () => setEmergencyOpen(true) }), []);
   const isChat = pathname.startsWith("/guest/chat");

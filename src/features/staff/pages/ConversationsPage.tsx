@@ -51,6 +51,7 @@ export function ConversationsPage() {
     if (m.isEscalationNotice) return t("conv.systemNotice");
     if (m.orderDraft) return t("conv.orderDraft");
     if (m.compensation) return t("conv.compensation", { item: t(m.compensation as TranslationKey) });
+    if (m.guestNotice) return t(`g.notice.${m.guestNotice.kind}` as TranslationKey, m.guestNotice.vars);
     return m.text || t("conv.aiUnavailable");
   };
 
@@ -165,7 +166,8 @@ export function ConversationsPage() {
                         <span className="font-normal">· {m.timestamp}</span>
                       </p>
                       {m.compensation && <p className="flex items-center gap-1.5 font-medium"><Gift className="h-3.5 w-3.5 shrink-0" />{t("conv.compensation", { item: t(m.compensation as TranslationKey) })}</p>}
-                      {(m.text || !m.compensation) && <p className="whitespace-pre-wrap break-words">{m.aiUnavailable ? t("conv.aiUnavailable") : m.text}</p>}
+                      {m.guestNotice && <p className="whitespace-pre-wrap break-words">{t(`g.notice.${m.guestNotice.kind}` as TranslationKey, m.guestNotice.vars)}</p>}
+                      {(m.text || (!m.compensation && !m.guestNotice)) && <p className="whitespace-pre-wrap break-words">{m.aiUnavailable ? t("conv.aiUnavailable") : m.text}</p>}
                       {m.ticket && <p className="mt-1.5 text-[0.6875rem] opacity-70">→ {m.ticket.id} · {m.ticket.dept}</p>}
                     </div>
                   </div>

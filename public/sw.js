@@ -36,11 +36,12 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      // Pakai jendela HOSPI Staff yang sudah terbuka bila ada.
-      const staff = windows.find((w) => new URL(w.url).pathname.startsWith("/staff"));
-      if (staff) {
-        await staff.focus();
-        return staff.navigate(url);
+      // Pakai jendela yang sudah terbuka di bagian yang sama (staf atau tamu) bila ada.
+      const section = new URL(url).pathname.split("/")[1];
+      const open = windows.find((w) => new URL(w.url).pathname.split("/")[1] === section);
+      if (open) {
+        await open.focus();
+        return open.navigate(url);
       }
       return self.clients.openWindow(url);
     })()

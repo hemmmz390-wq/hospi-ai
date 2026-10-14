@@ -16,7 +16,8 @@ import { LOCALES, Locale } from "../src/i18n/types";
 
 type Role = "front_office" | "housekeeping" | "maintenance" | "duty_manager" | "food_beverage";
 type Subscription = { endpoint: string; keys: { p256dh: string; auth: string } };
-type Record_ = { sub: Subscription; role: Role; locale: Locale; at: number };
+/** role "guest": HP tamu, terikat ke kamar dan masa menginapnya (stay). */
+type Record_ = { sub: Subscription; role: Role | "guest"; locale: Locale; at: number; room?: string; stay?: string };
 type Notification = {
   id: string;
   title: string;
@@ -26,6 +27,9 @@ type Notification = {
   read?: boolean;
   ticketId?: string;
   type?: string;
+  roomNumber?: string;
+  stay?: string;
+  guestNotice?: { kind: string; vars?: Record<string, string | number> };
 };
 
 const ROLES: Role[] = ["front_office", "housekeeping", "maintenance", "duty_manager", "food_beverage"];
@@ -92,13 +96,15 @@ function validSub(sub: any): sub is Subscription {
   return Boolean(sub && typeof sub.endpoint === "string" && sub.endpoint.startsWith("https://") && sub.keys?.p256dh && sub.keys?.auth);
 }
 
-export async function subscribe(sub: unknown, role: unknown, locale: unknown) {
+export async function subscribe(sub: unknown, role: unknown, locale: unknown, room?: unknown, stay?: unknown) {
   if (!validSub(sub)) throw new Error("invalid_subscription");
+  const isGuest = role === "guest" && typeof room === "string" && /^\d{3,4}$/.test(room);
   const r: Record_ = {
     sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } },
-    role: ROLES.includes(role as Role) ? (role as Role) : "front_office",
+    role: isGuest ? "guest" : ROLES.includes(role as Role) ? (role as Role) : "front_office",
     locale: (LOCALES as readonly string[]).includes(locale as string) ? (locale as Locale) : "id",
     at: Date.now(),
+    ...(isGuest ? { room: room as string, stay: typeof stay === "string" ? stay : "" } : {}),
   };
   await saveRecord(r);
   return r;
@@ -106,6 +112,14 @@ export async function subscribe(sub: unknown, role: unknown, locale: unknown) {
 
 export async function unsubscribe(endpoint: unknown) {
   if (typeof endpoint === "string") await removeRecord(endpoint);
+}
+
+/** Kabar untuk tamu: disusun dalam bahasa tamu dari kamus. */
+function guestPayload(n: Notification, locale: Locale) {
+  const key = `g.notice.${n.guestNotice?.kind}` as TranslationKey;
+  let body = dictionary[key]?.[locale] || dictionary[key]?.en || "";
+  for (const [k, v] of Object.entries(n.guestNotice?.vars || {})) body = body.split(`{${k}}`).join(String(v));
+  return JSON.stringify({ title: "Hospi Resort Bali", body, tag: n.ticketId || n.id, url: "/guest/chat", urgent: false });
 }
 
 function payloadFor(n: Notification, locale: Locale) {
@@ -142,7 +156,16 @@ export async function pushNotifications(list: Notification[]) {
   if (records.length === 0) return;
   const jobs: Promise<boolean>[] = [];
   for (const n of fresh) {
+    // Kabar untuk tamu: hanya ke HP tamu kamar itu, pada masa menginap yang sama.
+    if (n.targetRole === "tourist") {
+      for (const r of records) {
+        if (r.role !== "guest" || r.room !== n.roomNumber || (r.stay || "") !== (n.stay || "")) continue;
+        jobs.push(send(r, guestPayload(n, r.locale), false));
+      }
+      continue;
+    }
     for (const r of records) {
+      if (r.role === "guest") continue;
       if (n.targetRole !== "all" && n.targetRole !== r.role) continue;
       jobs.push(send(r, payloadFor(n, r.locale), n.type === "emergency" || n.type === "sla_breach"));
     }

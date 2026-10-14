@@ -227,6 +227,8 @@ export interface ChatMessage {
   offers?: UpsellOffer[];
   /** Pesan ini dikirim oleh staf manusia, bukan AI (Human Escalation) */
   isHumanAgent?: boolean;
+  /** Kabar dari AI bahwa pekerjaan selesai; teksnya disusun di layar penerima, dalam bahasanya. */
+  guestNotice?: GuestNotice;
   /** Kompensasi dari Duty Manager (key kamus), ditampilkan dalam bahasa tamu. */
   compensation?: string;
   agentName?: string;
@@ -269,6 +271,10 @@ export interface HotelRoom {
   stayStartedAt?: string;
 }
 
+/** Jenis kabar "pekerjaan selesai" yang dikirim AI ke tamu. */
+export type GuestNoticeKind = "order_ready_table" | "cleaning_done" | "ac_fixed" | "repair_done";
+export type GuestNotice = { kind: GuestNoticeKind; vars?: Record<string, string | number> };
+
 export interface AppNotification {
   id: string;
   title: string;
@@ -279,7 +285,10 @@ export interface AppNotification {
   read: boolean;
   ticketId?: string;
   roomNumber?: string;
-  type?: "sla_breach" | "sla_warning" | "new_ticket" | "defer" | "reopened" | "emergency" | "order_ready" | "rating";
+  type?: "sla_breach" | "sla_warning" | "new_ticket" | "defer" | "reopened" | "emergency" | "order_ready" | "rating" | "guest_update";
+  /** Untuk notifikasi ke tamu: isi kabarnya, dan masa menginap yang dituju. */
+  guestNotice?: GuestNotice;
+  stay?: string;
 }
 
 export interface SLAConfig {

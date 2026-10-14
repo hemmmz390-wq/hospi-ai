@@ -81,8 +81,8 @@ app.get("/api/push/key", (_req, res) => {
 app.post("/api/push/subscribe", async (req, res) => {
   if (!pushEnabled()) return res.status(503).json({ error: "push_disabled" });
   try {
-    const { subscription, role, locale } = req.body || {};
-    const r = await pushSubscribe(subscription, role, locale);
+    const { subscription, role, locale, room, stay } = req.body || {};
+    const r = await pushSubscribe(subscription, role, locale, room, stay);
     res.json({ ok: true, role: r.role, locale: r.locale });
   } catch {
     res.status(400).json({ error: "invalid_subscription" });

@@ -32,6 +32,7 @@ import { BellboySheet } from "./sheets/BellboySheet";
 import { useGuestSheets } from "./GuestApp";
 import { ATTRACTIONS, dayPartOf, rankAttractions } from "../../data/attractions";
 import { CATEGORY_META } from "./GuestExplore";
+import { GuestNotifyCard } from "./GuestNotify";
 
 type Action = { id: string; label: TranslationKey; icon: React.ComponentType<{ className?: string }> };
 
@@ -238,6 +239,9 @@ export function GuestHome() {
           </div>
         )}
       </section>
+
+      {/* Notifikasi HP: kabar saat pesanan siap, kamar bersih, perbaikan selesai */}
+      <GuestNotifyCard />
 
       {/* Wisata: dua rekomendasi yang paling cocok untuk saat ini */}
       <section aria-labelledby="explore-title">

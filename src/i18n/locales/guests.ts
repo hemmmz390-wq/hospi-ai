@@ -81,6 +81,64 @@ export const guests = {
   "guests.real": e("Tamu terdaftar", "Registered guest", "登録ゲスト", "등록 고객", "登记客人", "Зарегистрированный гость", "Client enregistré", "Registrierter Gast"),
   "guests.demo": e("Demo", "Demo", "デモ", "데모", "演示", "Демо", "Démo", "Demo"),
 
+  // ---------- Kabar dari AI: pekerjaan selesai ----------
+  "g.notice.order_ready_table": e(
+    "Pesanan {order} Anda sudah siap dan disajikan di Meja {table}. Selamat menikmati!",
+    "Your order {order} is ready and being served at table {table}. Enjoy your meal!",
+    "ご注文 {order} の準備ができました。{table}番テーブルにお出しします。どうぞお召し上がりください！",
+    "주문하신 {order}이(가) 준비되어 {table}번 테이블로 서빙됩니다. 맛있게 드세요!",
+    "您的订单 {order} 已备好，正在送到 {table} 号桌。请慢用！",
+    "Ваш заказ {order} готов, его подают к столу {table}. Приятного аппетита!",
+    "Votre commande {order} est prête et servie à la table {table}. Bon appétit !",
+    "Ihre Bestellung {order} ist fertig und wird an Tisch {table} serviert. Guten Appetit!"
+  ),
+  "g.notice.cleaning_done": e(
+    "Kamar Anda sudah selesai dibersihkan. Selamat beristirahat!",
+    "Your room has been cleaned. Enjoy your stay!",
+    "お部屋の清掃が完了しました。ごゆっくりお過ごしください！",
+    "객실 청소가 완료되었습니다. 편안히 쉬세요!",
+    "您的房间已打扫完毕，祝您入住愉快！",
+    "Уборка вашего номера завершена. Приятного отдыха!",
+    "Votre chambre a été nettoyée. Bon séjour !",
+    "Ihr Zimmer ist gereinigt. Einen schönen Aufenthalt!"
+  ),
+  "g.notice.ac_fixed": e(
+    "AC di kamar Anda sudah selesai diperbaiki. Kalau masih ada kendala, beri tahu kami di sini.",
+    "The air conditioning in your room has been fixed. If anything is still wrong, just tell us here.",
+    "お部屋のエアコンの修理が完了しました。まだ不具合があれば、こちらでお知らせください。",
+    "객실 에어컨 수리가 완료되었습니다. 아직 문제가 있으면 여기서 말씀해 주세요.",
+    "您房间的空调已修好。如仍有问题，请在这里告诉我们。",
+    "Кондиционер в вашем номере починили. Если что-то ещё не так, напишите нам здесь.",
+    "La climatisation de votre chambre a été réparée. Si quelque chose ne va toujours pas, dites-le-nous ici.",
+    "Die Klimaanlage in Ihrem Zimmer ist repariert. Falls noch etwas nicht stimmt, sagen Sie es uns hier."
+  ),
+  "g.notice.repair_done": e(
+    "Perbaikan di kamar Anda sudah selesai. Kalau masih ada kendala, beri tahu kami di sini.",
+    "The repair in your room is done. If anything is still wrong, just tell us here.",
+    "お部屋の修理が完了しました。まだ不具合があれば、こちらでお知らせください。",
+    "객실 수리가 완료되었습니다. 아직 문제가 있으면 여기서 말씀해 주세요.",
+    "您房间的维修已完成。如仍有问题，请在这里告诉我们。",
+    "Ремонт в вашем номере завершён. Если что-то ещё не так, напишите нам здесь.",
+    "La réparation dans votre chambre est terminée. Si quelque chose ne va toujours pas, dites-le-nous ici.",
+    "Die Reparatur in Ihrem Zimmer ist erledigt. Falls noch etwas nicht stimmt, sagen Sie es uns hier."
+  ),
+
+  // ---------- Notifikasi HP untuk tamu ----------
+  "g.notify.title": e("Kabari saya lewat notifikasi", "Notify me on my phone", "スマホに通知を受け取る", "휴대폰으로 알림 받기", "通过手机通知我", "Уведомлять меня на телефоне", "Me prévenir sur mon téléphone", "Mich per Benachrichtigung informieren"),
+  "g.notify.hint": e(
+    "Dapat pemberitahuan saat pesanan siap, kamar selesai dibersihkan, atau perbaikan selesai.",
+    "Get a notification when your order is ready, your room is cleaned, or a repair is done.",
+    "ご注文の準備完了、客室清掃の完了、修理の完了をお知らせします。",
+    "주문 준비, 객실 청소 완료, 수리 완료 시 알림을 받습니다.",
+    "订单备好、房间打扫完毕或维修完成时通知您。",
+    "Уведомим, когда заказ готов, номер убран или ремонт завершён.",
+    "Recevez une notification quand votre commande est prête, la chambre nettoyée ou une réparation terminée.",
+    "Benachrichtigung, wenn die Bestellung fertig, das Zimmer gereinigt oder eine Reparatur erledigt ist."
+  ),
+  "g.notify.enable": e("Aktifkan", "Turn on", "オンにする", "켜기", "开启", "Включить", "Activer", "Aktivieren"),
+  "g.notify.on": e("Notifikasi aktif", "Notifications on", "通知オン", "알림 켜짐", "通知已开启", "Уведомления включены", "Notifications activées", "Benachrichtigungen an"),
+  "g.notify.denied": e("Notifikasi diblokir di browser. Kabar tetap muncul di chat.", "Notifications are blocked in the browser. Updates still appear in the chat.", "ブラウザで通知がブロックされています。お知らせはチャットに表示されます。", "브라우저에서 알림이 차단되었습니다. 소식은 채팅에 표시됩니다.", "浏览器已阻止通知，动态仍会显示在聊天中。", "Уведомления заблокированы в браузере. Новости всё равно появятся в чате.", "Les notifications sont bloquées. Les nouvelles s'affichent quand même dans le chat.", "Benachrichtigungen sind blockiert. Neuigkeiten erscheinen trotzdem im Chat."),
+
   // ---------- Masuk tamu dengan kode ----------
   "entry.code": e("Kode akses", "Access code", "アクセスコード", "접속 코드", "访问码", "Код доступа", "Code d'accès", "Zugangscode"),
   "entry.codeHint": e(
