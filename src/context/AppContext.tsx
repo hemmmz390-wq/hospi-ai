@@ -237,6 +237,22 @@ const ROLE_FOR_DEPT: Record<Department, AppNotification["targetRole"]> = {
   "Food & Beverage": "food_beverage",
 };
 
+/**
+ * Batas akhir masa menginap tamu sungguhan: tanggal check-out pukul 12:00,
+ * atau jam late check-out yang sudah disetujui Front Office.
+ */
+export function checkoutDeadline(room: HotelRoom, tickets: ServiceTicket[]): Date {
+  const out = room.checkOutDate ? new Date(room.checkOutDate) : new Date(8.64e15);
+  const late = tickets
+    .filter((x) => x.room === room.roomNumber && x.lateCheckout && x.status !== "DIBATALKAN" && isTicketClosed(x.status) && (!room.stayStartedAt || x.sla.created_at >= room.stayStartedAt))
+    .sort((a, b) => b.sla.created_at.localeCompare(a.sla.created_at))[0];
+  if (late?.lateCheckout && room.checkOutDate) {
+    const [h, m] = late.lateCheckout.hour.split(":").map(Number);
+    out.setHours(h || 12, m || 0, 0, 0);
+  }
+  return out;
+}
+
 /** Waktu pembuatan pesan chat, dibaca dari id-nya (mis. "msg-1760000000000"). 0 bila tidak ada. */
 export const messageTime = (m: { id: string }) => Number(m.id.match(/(\d{13})/)?.[1] || 0);
 
@@ -359,10 +375,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const signOutRoom = useCallback(() => {
+    // Tamu berikutnya di perangkat ini mulai bersih: keranjang, bahasa yang
+    // dipilih, panduan awal, dan langganan notifikasi tamu sebelumnya dihapus.
+    if (session?.kind === "guest") {
+      const room = session.room;
+      try {
+        localStorage.removeItem(`hospi_cart_v1_${room}`);
+        localStorage.removeItem(`hospi_locale_room_${room}`);
+        localStorage.removeItem("hospi_guide_seen_v1");
+      } catch {
+        /* abaikan */
+      }
+      navigator.serviceWorker
+        ?.getRegistration("/")
+        .then((reg) => reg?.pushManager.getSubscription())
+        .then((sub) => {
+          if (!sub) return;
+          fetch("/api/push/unsubscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {});
+          return sub.unsubscribe();
+        })
+        .catch(() => {});
+    }
     setSession(null);
     setStaffRoleOverride(null);
     sessionService.clear();
-  }, []);
+  }, [session]);
 
   /** Hanya untuk staf/demo: melihat aplikasi dari sudut pandang kamar lain. */
   const setGuestRoom = useCallback((roomNumber: string) => setGuestRoomState(roomNumber), []);
@@ -434,14 +471,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Sesi tamu sungguhan berakhir saat check-out atau saat kode diganti. Dinilai
   // setelah sinkron pertama, supaya data lama di perangkat tidak mengeluarkan tamu.
+  // Jam berdetak untuk tamu: sesi berakhir sendiri saat waktu check-out lewat.
+  const [guestClock, setGuestClock] = useState(() => Date.now());
+  useEffect(() => {
+    if (session?.kind !== "guest") return;
+    const id = setInterval(() => setGuestClock(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, [session?.kind]);
+
   const guestAccessValid = useMemo(() => {
     if (session?.kind !== "guest") return true;
     if (syncStatus !== "live") return true;
     const room = syncedGuestRoom;
-    if (session.access) return Boolean(room?.guestName) && room?.accessHash === session.access;
+    // Kamar sudah kosong (check-out), demo maupun tamu sungguhan.
+    if (!room?.guestName) return false;
+    if (session.access) {
+      if (room.accessHash !== session.access) return false;
+      return guestClock < checkoutDeadline(room, tickets).getTime();
+    }
     // Sesi tanpa kode (kamar demo): tidak sah lagi bila kamar kini milik tamu sungguhan.
-    return !room?.accessHash;
-  }, [session, syncStatus, syncedGuestRoom]);
+    return !room.accessHash;
+  }, [session, syncStatus, syncedGuestRoom, guestClock, tickets]);
 
   const lateCheckoutRequest = useMemo<LateCheckoutRequest | null>(() => {
     const latest = tickets
@@ -1659,6 +1709,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
     [showToast, t]
   );
+
+  useEffect(() => {
+    if (sessionKind !== "staff") return;
+    const run = () => {
+      const now = Date.now();
+      const due = rooms.filter((r) => r.realGuest && r.guestName && checkoutDeadline(r, tickets).getTime() <= now);
+      if (due.length === 0) return;
+      const stamp = new Date().toISOString();
+      const numbers = new Set(due.map((r) => r.roomNumber));
+      setRooms((prev) =>
+        prev.map((r) =>
+          numbers.has(r.roomNumber) && r.realGuest && r.guestName
+            ? { ...r, guestName: "", guestLocale: undefined, guestLanguage: "", guestPhone: undefined, guestEmail: undefined, nationality: undefined, checkOutDate: stamp, status: "Needs Cleaning", realGuest: false, accessHash: undefined, stayStartedAt: stamp }
+            : r
+        )
+      );
+      setEscalations((prev) => prev.map((e) => (numbers.has(e.room) && e.status !== "selesai" ? { ...e, status: "selesai", aiPaused: false } : e)));
+      // Satu notifikasi per masa menginap (id tetap), walau banyak layar staf menjalankan ini.
+      for (const r of due) {
+        notify({ id: `auto-co-${r.roomNumber}-${r.stayStartedAt || ""}`, title: "Auto check-out", message: `${r.roomNumber} · ${r.guestName}`, priority: "MEDIUM", targetRole: "front_office", roomNumber: r.roomNumber });
+      }
+    };
+    run();
+    const id = setInterval(run, 60000);
+    return () => clearInterval(id);
+  }, [sessionKind, rooms, tickets, notify]);
 
   const visibleFolio = useMemo(() => folioCharges.filter((c) => inStay(c.postedAt)), [folioCharges, inStay]);
 
