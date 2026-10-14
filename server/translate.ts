@@ -13,6 +13,8 @@ import { getGeminiClient } from "./ai/geminiClassifier";
 
 const MYMEMORY_LANG: Record<string, string> = { id: "id", ja: "ja", ko: "ko", zh: "zh-CN", ru: "ru", fr: "fr", de: "de" };
 const cache = new Map<string, string>();
+/** Alasan gagal terakhir (untuk diagnosa lewat /api/translate). */
+export let lastTranslateError = "";
 
 async function viaGemini(text: string, from: string): Promise<string | null> {
   const ai = getGeminiClient();
@@ -37,13 +39,24 @@ async function viaMyMemory(text: string, from: string): Promise<string | null> {
     // Batas layanan sekitar 500 byte per permintaan.
     const q = text.slice(0, 450);
     const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=${src}|en`, { signal: ctrl.signal });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.warn("[translate] MyMemory HTTP", res.status);
+      lastTranslateError = `http_${res.status}`;
+      return null;
+    }
     const json: any = await res.json();
     const out = String(json?.responseData?.translatedText || "").trim();
     // Saat kuota habis layanan mengembalikan pesan peringatan, bukan terjemahan.
-    if (!out || json?.quotaFinished || /MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(out)) return null;
+    if (!out || json?.quotaFinished || /MYMEMORY WARNING|QUERY LENGTH LIMIT/i.test(out)) {
+      console.warn("[translate] MyMemory menolak:", json?.responseStatus, json?.responseDetails || out.slice(0, 120));
+      lastTranslateError = `rejected_${json?.responseStatus}: ${String(json?.responseDetails || out).slice(0, 120)}`;
+      return null;
+    }
+    if (out === text.trim()) lastTranslateError = `same_as_source: status=${json?.responseStatus} match=${json?.responseData?.match} details=${String(json?.responseDetails || "").slice(0, 80)}`;
     return out;
-  } catch {
+  } catch (err) {
+    console.warn("[translate] MyMemory gagal:", (err as Error)?.message);
+    lastTranslateError = `error: ${(err as Error)?.message}`;
     return null;
   } finally {
     clearTimeout(timer);
@@ -54,10 +67,17 @@ async function viaMyMemory(text: string, from: string): Promise<string | null> {
 export async function translateToEnglish(text: string, from: string): Promise<string | null> {
   const clean = String(text || "").trim();
   if (!clean || from === "en") return null;
+  lastTranslateError = "";
   const key = `${from}:${clean}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const out = (await viaGemini(clean, from)) || (await viaMyMemory(clean, from));
+  let out = await viaGemini(clean, from);
+  // Layanan gratis kadang mengembalikan teks asli atau gagal sesaat: coba sampai tiga kali.
+  for (let attempt = 0; !out && attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 400 * attempt));
+    const candidate = await viaMyMemory(clean, from);
+    if (candidate && candidate.toLowerCase() !== clean.toLowerCase()) out = candidate;
+  }
   if (out && out.toLowerCase() !== clean.toLowerCase()) {
     if (cache.size > 2000) cache.clear();
     cache.set(key, out);
